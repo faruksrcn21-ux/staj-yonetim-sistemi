@@ -11,7 +11,7 @@ prolab3-staj-sistemi/
 ├── backend/                  # 1. ve 2. Kişinin geliştireceği Backend (API / Veritabanı / İş Mantığı)
 ├── frontend/                 # 3. Kişinin geliştireceği Kullanıcı Arayüzü (Web / UI)
 ├── docs/                     # Proje dokümantasyonu, diyagramlar ve iş bölümü
-│   ├── 00_PROJE_ISTERLERI_VE_SSS.md   # Hocanın isterleri + soru-cevaplar (ESAS KAYNAK)
+│   ├── 00_PROJE_ISTERLERI_VE_SSS.md   # Hocanın isterleri + soru-cevaplar
 │   ├── 01_VERITABANI_ER_DIYAGRAMI.md
 │   ├── 02_NYP_CLASS_DIYAGRAMI.md
 │   ├── 03_AKIS_DIYAGRAMI_FLOWCHART.md
@@ -26,8 +26,8 @@ prolab3-staj-sistemi/
 ## 🛠️ Teknolojiler
 
 - **Backend:** C# + ASP.NET Core Web API (.NET 10)
-- **Veritabanı:** SQLite + Entity Framework Core (migration'lar repoda)
-- **Kimlik Doğrulama:** JWT (rol claim'i) + BCrypt şifre hash'leme
+- **Veritabanı:** SQLite + Entity Framework Core
+- **Kimlik Doğrulama:** JWT (rol bilgisi token içinde)
 
 ---
 

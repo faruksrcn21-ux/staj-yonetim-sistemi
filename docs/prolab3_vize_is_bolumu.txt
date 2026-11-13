@@ -4,50 +4,26 @@
 ================================================================================
 
 [1] VİZE PRENSİPLERİ (HOCANIN TALİMATLARI)
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------- 
 1. Vizede olmayan (OCR, Google Form, Ek-17, detaylı alan kısıtları) vizeye kadar
    kodlanmayacaktır.
 2. Vizede "Ona bağlı kontroller" kuralı sadece dosya format ve uzantı kontrolünü kapsar.
 3. Sunumda kodun herhangi bir yeri sorulabileceği için her grup üyesi kodun ve
    algoritmanın tamamına hakim olmak zorundadır.
 4. IEEE rapor metni grup üyeleri tarafından yazılacaktır. Yapay zekâ ile
-   oluşturulduğu tespit edilen raporlar değerlendirmeye alınmaz (Bölüm 8).
+   oluşturulduğu tespit edilen raporlar değerlendirmeye alınmaz.
 5. Hocanın dokümanı ve soru-cevapları: docs/00_PROJE_ISTERLERI_VE_SSS.md
-   Plan ile çelişki olursa o dosya esas alınır.
 
 
 ================================================================================
-[1.5] TEKNOLOJİ KARARLARI VE ORTAK KURALLAR
+[1.5] ORTAK TEKNOLOJİLER (TÜM EKİP AYNISINI KULLANIR)
 ================================================================================
-* Backend   : C# + ASP.NET Core Web API (.NET 10 LTS)
-* ORM / DB  : Entity Framework Core + SQLite (kurulumsuz; migration'lar repoda,
-              .db dosyası repoya EKLENMEZ). Gerekirse provider tek satırla
-              PostgreSQL'e çevrilebilir.
-* Şifreleme : BCrypt (BCrypt.Net-Next paketi)
-* Oturum    : JWT (Bearer). Rol, token içinde "role" claim'i olarak taşınır.
-              Logout'ta token'ın "jti" değeri `revoked_tokens` tablosuna yazılır;
-              her istekte bu tablo kontrol edilir (geçersiz token -> 401).
-* Hesap Kilidi: Üst üste 5 hatalı şifrede hesap 15 dakika kilitlenir
-              (`locked_until`). Başarılı girişte sayaç sıfırlanır.
-* IP Kilidi : Dokümana göre "5 hatalı kullanıcı adı / şifre" denemesi de
-              kilitlemelidir. Var olmayan kullanıcı adıyla yapılan denemeler
-              de loglanır; aynı IP'den son 15 dk içinde 5 başarısız deneme
-              varsa o IP'den giriş 15 dk reddedilir (login_logs üzerinden).
-* Öğrenci <-> Test Veri Seti eşleşmesi: Öğrenci kayıt olurken öğrenci
-              numarasını girer (users.student_no). Karşılaştırma bu numarayla
-              bulunan admin_test_dataset kaydı üzerinden yapılır.
-* Admin Hesabı: Kayıt ekranı yalnızca ROLE_STUDENT oluşturur. Admin hesabı
-              uygulama ilk açılışta seed (appsettings) ile oluşturulur.
-* Görsel Dosyalar (.jpeg/.png): OCR olmadığı için içerik okunamaz; kabul edilir
-              ama `parsed_data` boş kalır ve statü 'INCELENIYOR' olur.
-* Statü Akışı (Doküman Bölüm 5): YUKLENDI -> INCELENIYOR -> HATALI_EKSIK
-              -> (düzeltilip yeniden yüklenir) -> ONAYLANDI -> TAMAMLANDI.
-              "Onaylanan belgeler Tamamlandı statüsüne geçer."
-              [EKİPÇE KARAR VERİLECEK] ONAYLANDI -> TAMAMLANDI geçişi otomatik
-              mi, admin onayıyla mı? (Öneri: karşılaştırma başarılı ->
-              ONAYLANDI -> otomatik TAMAMLANDI.)
-* TAMAMLANDI yetkisi (Hoca cevabı #3): Öğrenci hiçbir şekilde değiştiremez /
-              silemez; admin güncelleyebilir ve silebilir.
+* Backend   : C# + ASP.NET Core Web API (.NET 10)
+* Veritabanı: Entity Framework Core + SQLite (migration'lar repoda,
+              .db dosyası repoya eklenmez)
+* Kimlik Doğrulama: JWT (Bearer). Rol (ROLE_STUDENT / ROLE_ADMIN) token
+              içinde taşınır. Korumalı isteklerde
+              "Authorization: Bearer <token>" header'ı gönderilir.
 
 
 ================================================================================
@@ -59,21 +35,19 @@
 --------------------------------------------------------------------------------
 [KOD GÖREVLERİ]
 * Veritabanı Mimarisi (ERD Uygulaması):
-  - users, login_logs, revoked_tokens, admin_test_dataset ve documents
-    tablolarının EF Core migration'ları ile oluşturulması (2. kişi documents
-    tablosunu bu şema üzerinden kullanır).
-  - Admin hesabının seed edilmesi.
+  - Kullanıcılar, Kullanıcı Rolleri, Oturum/Log kayıtları ve Admin Test Veri Seti
+    tablolarının veritabanında oluşturulması.
 * Oturum Açma ve Kayıt Sistemi:
   - Öğrencilerin sistemde kendi hesaplarını oluşturması ve şifre belirleme servisleri.
   - Kullanıcı adı / e-posta + şifre ile giriş servisleri.
 * Güvenlik & Loglama:
   - Şifrelerin açık metin saklanmayıp veritabanında HASH'lenerek (Bcrypt/Argon2 vb.) tutulması.
   - Başarısız giriş denemelerinin loglanması.
-  - Üst üste 5 hatalı şifre denemesinde hesabın 15 dk kilitlenmesi mantığı.
+  - Üst üste 5 hatalı kullanıcı adı / şifre denemesinde hesabın kilitlenmesi mantığı.
 * Yetkilendirme Katmanı (RBAC):
-  - JWT içerisinde rol (ROLE_STUDENT, ROLE_ADMIN) taşınması.
-  - Yetkisiz istek atıldığında 403 Forbidden dönülmesi (yönlendirme frontend'de).
-  - Çıkış (Logout) yapıldığında token'ın revoked_tokens ile geçersiz kılınması.
+  - Session veya JWT içerisinde rol (ROLE_STUDENT, ROLE_ADMIN) taşınması.
+  - Yetkisiz istek atıldığında 403 Forbidden dönülmesi ve kullanıcı yönlendirmesi.
+  - Çıkış (Logout) yapıldığında session/token'ın geçersiz kılınması.
 * Nesne Yönelimli Programlama (NYP):
   - Encapsulation, Abstraction, Inheritance ve Polymorphism prensiplerinin 
     kullanıcı ve auth sınıflarında uygulanması.

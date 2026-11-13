@@ -3,7 +3,7 @@
 Bu diyagram, kullanıcının sisteme girişinden itibaren Öğrenci ve Admin rollerinin vize kapsamındaki tüm işlem adımlarını gösterir.
 
 ## 1. Adım Adım Süreç Akışı
-1. **Kimlik Doğrulama:** Kullanıcı kayıt olur veya giriş yapar. Başarısız denemeler loglanır; üst üste 5 hatalı şifrede hesap 15 dakika kilitlenir.
+1. **Kimlik Doğrulama:** Kullanıcı kayıt olur veya giriş yapar. 5 hatalı şifre denemesi loglanır ve hesap kilitlenir.
 2. **Rol Yönlendirmesi:**
    * `ROLE_STUDENT`: Öğrenci paneline yönlendirilir.
    * `ROLE_ADMIN`: Admin paneline yönlendirilir.
@@ -32,7 +32,7 @@ flowchart TD
     Login --> AuthCheck{Bilgiler Doğru mu?}
     AuthCheck -- Hayır --> LogFail[Başarısız Girişi Logla & Sayacı Artır]
     LogFail --> LockCheck{Hata Sayısı == 5 mi?}
-    LockCheck -- Evet --> LockAccount[Hesabı 15 dk Kilitle] --> End([Bitir])
+    LockCheck -- Evet --> LockAccount[Hesabı Kilitle] --> End([Bitir])
     LockCheck -- Hayır --> Login
 
     AuthCheck -- Evet --> RoleCheck{Kullanıcı Rolü Nedir?}
