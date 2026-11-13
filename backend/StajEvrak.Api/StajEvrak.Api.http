@@ -24,7 +24,8 @@ Content-Type: application/json
   "password": "sifre123"
 }
 
-### 3) Kullanıcı adıyla giriş -> 200
+### 3) Kullanıcı adıyla giriş -> 200 (yanıttaki token aşağıdaki isteklerde otomatik kullanılır)
+# @name login
 POST {{host}}/api/auth/login
 Content-Type: application/json
 
@@ -59,5 +60,25 @@ Content-Type: application/json
   "identifier": "olmayan_kullanici",
   "password": "x"
 }
+
+# ------------------------------------------------------------------
+# YETKİLENDİRME (önce 3. isteği çalıştırıp token alın)
+# ------------------------------------------------------------------
+@token = {{login.response.body.$.token}}
+
+### 7) Token ile kendi bilgilerim -> 200
+GET {{host}}/api/auth/me
+Authorization: Bearer {{token}}
+
+### 8) Token olmadan -> 403 (redirectTo: /login)
+GET {{host}}/api/auth/me
+
+### 9) Öğrenci token'ı ile öğrenci endpoint'i -> 200
+GET {{host}}/api/role-check/student
+Authorization: Bearer {{token}}
+
+### 10) Öğrenci token'ı ile ADMIN endpoint'i -> 403 (redirectTo: /login)
+GET {{host}}/api/role-check/admin
+Authorization: Bearer {{token}}
 
 ###

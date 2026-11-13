@@ -36,8 +36,17 @@ public class LoginRequest
 /// <summary>Kullanıcı bilgisi (şifre hash'i içermez).</summary>
 public record UserResponse(int Id, string Username, string Email, string Role, string DashboardView);
 
-/// <summary>Başarılı giriş yanıtı. (Token alanı 4. adımda JWT ile doldurulacak.)</summary>
-public record LoginResponse(UserResponse User);
+/// <summary>
+/// Başarılı giriş yanıtı. Frontend token'ı saklar ve korumalı isteklerde
+/// "Authorization: Bearer &lt;token&gt;" header'ı ile gönderir.
+/// </summary>
+public record LoginResponse(string Token, DateTime ExpiresAt, UserResponse User);
 
-/// <summary>Hata yanıtı.</summary>
-public record ErrorResponse(string Message, int? RemainingAttempts = null, DateTime? LockedUntil = null);
+/// <summary>
+/// Hata yanıtı. RedirectTo doluysa frontend kullanıcıyı o sayfaya (login) yönlendirmelidir.
+/// </summary>
+public record ErrorResponse(
+    string Message,
+    int? RemainingAttempts = null,
+    DateTime? LockedUntil = null,
+    string? RedirectTo = null);

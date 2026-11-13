@@ -1,4 +1,7 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.JsonWebTokens;
 using StajEvrak.Api.Dtos;
 using StajEvrak.Api.Models;
 using StajEvrak.Api.Services;
@@ -14,10 +17,12 @@ namespace StajEvrak.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly AuthService _auth;
+    private readonly JwtTokenService _tokens;
 
-    public AuthController(AuthService auth)
+    public AuthController(AuthService auth, JwtTokenService tokens)
     {
         _auth = auth;
+        _tokens = tokens;
     }
 
     /// <summary>Öğrenci kaydı. 201 Created / 409 Conflict / 400 Bad Request.</summary>
@@ -46,7 +51,7 @@ public class AuthController : ControllerBase
 
         return result.Status switch
         {
-            LoginStatus.Success => Ok(new LoginResponse(ToUserResponse(result.User!))),
+            LoginStatus.Success => Ok(CreateLoginResponse(result.User!)),
 
             // Güvenlik: kullanıcı adının mı şifrenin mi yanlış olduğu söylenmez.
             LoginStatus.InvalidCredentials => Unauthorized(new ErrorResponse(
@@ -63,6 +68,25 @@ public class AuthController : ControllerBase
 
             _ => StatusCode(StatusCodes.Status500InternalServerError),
         };
+    }
+
+    /// <summary>
+    /// Giriş yapmış kullanıcının bilgisi. Token yoksa / geçersizse 403 döner.
+    /// Frontend sayfa yenilendiğinde token hâlâ geçerli mi diye buna bakabilir.
+    /// </summary>
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult Me() => Ok(new
+    {
+        Id = int.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub)!),
+        Username = User.FindFirstValue(JwtTokenService.NameClaim),
+        Role = User.FindFirstValue(JwtTokenService.RoleClaim),
+    });
+
+    private LoginResponse CreateLoginResponse(BaseUser user)
+    {
+        var (token, expiresAt) = _tokens.CreateToken(user);
+        return new LoginResponse(token, expiresAt, ToUserResponse(user));
     }
 
     private static UserResponse ToUserResponse(BaseUser user) =>
