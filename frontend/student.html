@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Öğrenci Paneli | Staj Takip ve Yönetim Sistemi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap&subset=latin-ext" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <strong>Staj Takip ve Yönetim Sistemi</strong>
+    <div class="who">
+      <span id="user-name"></span>
+      <button type="button" class="btn" id="logout-btn">Çıkış yap</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="page-grid">
+
+      <section class="panel" aria-labelledby="list-title">
+        <h2 id="list-title">Başvurularım</h2>
+        <ul id="app-list" class="app-list"></ul>
+        <p id="empty" class="empty" hidden>Henüz başvurun yok. Sağdaki formdan yeni başvuru yapabilirsin.</p>
+      </section>
+
+      <section class="panel" aria-labelledby="form-title">
+        <h2 id="form-title">Yeni staj başvurusu</h2>
+        <form id="app-form" novalidate>
+          <div class="field">
+            <label for="company">Firma / kurum adı</label>
+            <input id="company" name="company" type="text" required>
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label for="startDate">Başlangıç tarihi</label>
+              <input id="startDate" name="startDate" type="date" required>
+            </div>
+            <div class="field">
+              <label for="endDate">Bitiş tarihi</label>
+              <input id="endDate" name="endDate" type="date" required>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="files">Belgeler (PDF)</label>
+            <input id="files" name="files" type="file" accept="application/pdf,.pdf" multiple>
+            <p class="hint">Staj başvuru formu ve SGK giriş belgesi. Her dosya en fazla 5 MB.</p>
+            <ul id="file-list" class="file-list"></ul>
+          </div>
+
+          <p id="form-message" class="message" role="alert" hidden></p>
+          <button type="submit" id="submit-btn" class="btn btn-primary">Başvuruyu gönder</button>
+        </form>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script src="student.js"></script>
+</body>
+</html>

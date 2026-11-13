@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Başvuru Yönetimi | Staj Takip ve Yönetim Sistemi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap&subset=latin-ext" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <strong>Staj Takip ve Yönetim Sistemi</strong>
+    <div class="who">
+      <span id="user-name"></span>
+      <button type="button" class="btn" id="logout-btn">Çıkış yap</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="stats" id="stats" aria-label="Başvuru özeti"></div>
+
+    <section class="panel" aria-labelledby="table-title">
+      <h2 id="table-title">Staj başvuruları</h2>
+
+      <div class="toolbar">
+        <input id="search" type="search" placeholder="Öğrenci, numara veya firma ara" aria-label="Ara">
+        <select id="status-filter" aria-label="Duruma göre filtrele">
+          <option value="all">Tüm durumlar</option>
+          <option value="pending">Beklemede</option>
+          <option value="approved">Onaylandı</option>
+          <option value="rejected">Reddedildi</option>
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Öğrenci</th>
+              <th>Numara</th>
+              <th>Firma</th>
+              <th>Tarih aralığı</th>
+              <th>Durum</th>
+              <th><span class="sr-only">İşlem</span></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p id="empty" class="empty" hidden>Bu filtreye uyan başvuru yok.</p>
+    </section>
+  </main>
+
+  <dialog id="review-dialog" aria-labelledby="dlg-title">
+    <div class="dlg-body">
+      <h2 id="dlg-title">Başvuru incelemesi</h2>
+      <dl id="dlg-info"></dl>
+
+      <h3 class="muted">Yüklenen belgeler</h3>
+      <div id="dlg-docs"></div>
+
+      <div class="field" style="margin-top:1rem">
+        <label for="feedback">Geri bildirim notu</label>
+        <textarea id="feedback" rows="3" placeholder="Reddederken neden belirt, onaylarken isteğe bağlı"></textarea>
+      </div>
+      <p id="dlg-message" class="message" role="alert" hidden></p>
+
+      <div class="dlg-actions">
+        <button type="button" class="btn" id="dlg-close">Kapat</button>
+        <button type="button" class="btn btn-reject" id="dlg-reject">Reddet</button>
+        <button type="button" class="btn btn-approve" id="dlg-approve">Onayla</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="app.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

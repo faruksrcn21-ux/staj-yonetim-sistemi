@@ -142,3 +142,80 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* ===== Dashboard layout ===== */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 0.8rem clamp(1rem, 4vw, 2.5rem);
+  background: var(--brand); color: #fff;
+}
+.topbar strong { font-weight: 600; }
+.topbar .who { display: flex; align-items: center; gap: 1rem; font-size: 0.95rem; }
+.topbar .btn { padding: 0.4rem 0.8rem; background: transparent; color: #fff; border-color: rgba(255,255,255,.5); }
+.topbar .btn:hover { border-color: #fff; }
+
+.container { max-width: 1080px; margin: 0 auto; padding: 1.5rem clamp(1rem, 4vw, 2rem) 3rem; }
+.page-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 1.5rem; align-items: start; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 1.25rem; }
+.panel h2 { font-size: 1.15rem; margin-bottom: 1rem; }
+.panel + .panel { margin-top: 1.5rem; }
+.muted { color: var(--ink-soft); font-size: 0.95rem; }
+.empty { padding: 1.5rem 0; text-align: center; color: var(--ink-soft); }
+
+/* Başvuru kartları (öğrenci) */
+.app-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
+.app-item { border: 1px solid var(--line); border-radius: var(--radius); padding: 0.9rem 1rem; }
+.app-item header { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem; }
+.app-item h3 { font-size: 1rem; }
+.app-item .note { margin: 0.6rem 0 0; padding: 0.5rem 0.7rem; border-left: 3px solid var(--line); background: var(--paper); font-size: 0.92rem; }
+.app-item.is-rejected .note { border-left-color: var(--rejected); }
+.app-item.is-approved .note { border-left-color: var(--approved); }
+.docs { margin: 0.5rem 0 0; padding-left: 1.1rem; font-size: 0.9rem; color: var(--ink-soft); }
+
+.file-list { list-style: none; margin: 0.4rem 0 0; padding: 0; font-size: 0.9rem; color: var(--ink-soft); }
+.hint { font-size: 0.85rem; color: var(--ink-soft); margin-top: 0.25rem; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.panel .btn-primary { width: auto; }
+
+/* Özet sayaçları (yönetim) */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.25rem; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.8rem 1rem; }
+.stat b { display: block; font-size: 1.6rem; line-height: 1.2; }
+.stat span { font-size: 0.9rem; color: var(--ink-soft); }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
+.toolbar input, .toolbar select { padding: 0.55rem 0.7rem; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; }
+.toolbar input { flex: 1; min-width: 200px; }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+th, td { text-align: left; padding: 0.65rem 0.6rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-weight: 600; color: var(--ink-soft); font-size: 0.9rem; white-space: nowrap; }
+tbody tr:hover { background: #f1f6f4; }
+td .btn { padding: 0.35rem 0.8rem; }
+
+/* İnceleme penceresi */
+dialog { border: 1px solid var(--line); border-radius: 12px; padding: 0; width: min(560px, 94vw); color: var(--ink); }
+dialog::backdrop { background: rgba(10, 30, 26, 0.5); }
+.dlg-body { padding: 1.25rem; }
+.dlg-body h2 { font-size: 1.2rem; margin-bottom: 0.75rem; }
+.dlg-body dl { display: grid; grid-template-columns: 8rem 1fr; gap: 0.35rem 0.75rem; margin: 0 0 1rem; }
+.dlg-body dt { color: var(--ink-soft); }
+.dlg-body dd { margin: 0; }
+.doc-row { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.4rem 0; border-bottom: 1px solid var(--line); }
+.doc-row .btn { padding: 0.25rem 0.7rem; }
+.dlg-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; }
+
+.toast { position: fixed; right: 1rem; bottom: 1rem; max-width: 360px; padding: 0.7rem 1rem; border-radius: var(--radius); box-shadow: 0 4px 16px rgba(0,0,0,.15); z-index: 50; }
+.toast.is-success { background: var(--approved); color: #fff; }
+.toast.is-error { background: var(--rejected); color: #fff; }
+
+@media (max-width: 820px) {
+  .page-grid { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .form-row { grid-template-columns: 1fr; }
+  .dlg-body dl { grid-template-columns: 1fr; }
+}
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

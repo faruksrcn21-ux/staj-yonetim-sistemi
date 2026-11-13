@@ -139,6 +139,41 @@ const api = {
   }
 };
 
+/* ---------- Ortak yardımcılar (dashboard sayfaları kullanır) ---------- */
+const STATUS_LABEL = { pending: "Beklemede", approved: "Onaylandı", rejected: "Reddedildi" };
+
+function esc(value) {
+  const d = document.createElement("div");
+  d.textContent = value == null ? "" : String(value);
+  return d.innerHTML;
+}
+
+function fmtDate(iso) {
+  if (!iso) return "-";
+  const [y, m, d] = iso.split("-");
+  return d + "." + m + "." + y;
+}
+
+function statusBadge(status) {
+  return '<span class="badge badge-' + esc(status) + '">' + esc(STATUS_LABEL[status] || status) + "</span>";
+}
+
+function toast(text, type) {
+  const el = document.createElement("div");
+  el.className = "toast " + (type === "error" ? "is-error" : "is-success");
+  el.setAttribute("role", "status");
+  el.textContent = text;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// Belge adresi. Gerçek backend'de dosya endpoint'i token isteyebilir;
+// bunu takım arkadaşlarıyla netleştir (cookie ya da ?token= gibi).
+function documentUrl(appId, fileName) {
+  if (CONFIG.USE_MOCK) return null;
+  return CONFIG.API_BASE + "/applications/" + appId + "/documents/" + encodeURIComponent(fileName);
+}
+
 /* ---------- 4) Session ---------- */
 const Session = {
   save({ token, user }) { sessionStorage.setItem("staj_session", JSON.stringify({ token, user })); },
