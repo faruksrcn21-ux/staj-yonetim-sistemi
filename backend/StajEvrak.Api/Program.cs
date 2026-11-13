@@ -93,12 +93,21 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Uygulama açılırken bekleyen migration'ları uygular. Böylece ekipte herkes
-// "dotnet run" dediğinde veritabanı tabloları otomatik oluşur.
+// Uygulama açılırken:
+//  1) Bekleyen migration'lar uygulanır (ekipte herkes "dotnet run" dediğinde tablolar oluşur).
+//  2) Hiç admin yoksa appsettings'teki "AdminSeed" bilgileriyle admin hesabı oluşturulur.
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
+
+    var adminSeed = builder.Configuration.GetSection(AdminSeedOptions.SectionName).Get<AdminSeedOptions>()
+                    ?? new AdminSeedOptions();
+    await DbSeeder.SeedAdminAsync(
+        db,
+        scope.ServiceProvider.GetRequiredService<IPasswordHasher>(),
+        adminSeed,
+        app.Logger);
 }
 
 // ---- HTTP istek hattı ----

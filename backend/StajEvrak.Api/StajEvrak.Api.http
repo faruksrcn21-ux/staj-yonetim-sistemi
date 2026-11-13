@@ -89,4 +89,28 @@ Authorization: Bearer {{token}}
 GET {{host}}/api/auth/me
 Authorization: Bearer {{token}}
 
+# ------------------------------------------------------------------
+# ADMIN (hesap uygulama açılışında seed ile oluşur: appsettings.Development.json -> AdminSeed)
+# ------------------------------------------------------------------
+
+### 13) Admin girişi -> 200 (dashboardView: /admin)
+# @name adminLogin
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+@adminToken = {{adminLogin.response.body.$.token}}
+
+### 14) Admin token'ı ile admin endpoint'i -> 200
+GET {{host}}/api/role-check/admin
+Authorization: Bearer {{adminToken}}
+
+### 15) Admin token'ı ile ÖĞRENCİ endpoint'i -> 403
+GET {{host}}/api/role-check/student
+Authorization: Bearer {{adminToken}}
+
 ###
