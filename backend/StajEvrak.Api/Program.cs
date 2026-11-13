@@ -10,6 +10,11 @@ using StajEvrak.Api.Data;
 using StajEvrak.Api.Dtos;
 using StajEvrak.Api.Services;
 
+// Gizli ayarları (JWT anahtarı, admin şifresi) .env dosyasından ortam değişkenlerine yükle.
+// NoClobber: bilgisayarda zaten tanımlı bir ortam değişkeni varsa .env onu ezmez.
+// TraversePath: .env'i çalışılan klasörden başlayıp yukarı doğru arar.
+DotNetEnv.Env.NoClobber().TraversePath().Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
 // ---- Servis kayıtları ----
@@ -32,7 +37,7 @@ var jwt = jwtSection.Get<JwtOptions>() ?? new JwtOptions();
 
 if (jwt.Key.Length < 32)
     throw new InvalidOperationException(
-        "Jwt:Key ayarı eksik veya 32 karakterden kısa. appsettings.Development.json veya Jwt__Key ortam değişkenini kontrol edin.");
+        "Jwt__Key ayarı eksik veya 32 karakterden kısa. backend/StajEvrak.Api/.env.example dosyasını .env olarak kopyalayıp doldurun.");
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

@@ -90,17 +90,18 @@ GET {{host}}/api/auth/me
 Authorization: Bearer {{token}}
 
 # ------------------------------------------------------------------
-# ADMIN (hesap uygulama açılışında seed ile oluşur: appsettings.Development.json -> AdminSeed)
+# ADMIN (hesap uygulama açılışında seed ile oluşur; bilgiler .env dosyasında)
 # ------------------------------------------------------------------
 
 ### 13) Admin girişi -> 200 (dashboardView: /admin)
+# Kullanıcı adı ve şifre .env dosyasından okunur (REST Client: $dotenv).
 # @name adminLogin
 POST {{host}}/api/auth/login
 Content-Type: application/json
 
 {
-  "identifier": "admin",
-  "password": "Admin123!"
+  "identifier": "{{$dotenv AdminSeed__Username}}",
+  "password": "{{$dotenv AdminSeed__Password}}"
 }
 
 @adminToken = {{adminLogin.response.body.$.token}}
