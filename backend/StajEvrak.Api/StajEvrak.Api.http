@@ -81,4 +81,12 @@ Authorization: Bearer {{token}}
 GET {{host}}/api/role-check/admin
 Authorization: Bearer {{token}}
 
+### 11) Çıkış -> 200 (token iptal edilir)
+POST {{host}}/api/auth/logout
+Authorization: Bearer {{token}}
+
+### 12) Çıkıştan sonra AYNI token ile istek -> 403 (token artık geçersiz)
+GET {{host}}/api/auth/me
+Authorization: Bearer {{token}}
+
 ###

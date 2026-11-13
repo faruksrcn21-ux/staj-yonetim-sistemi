@@ -4,6 +4,7 @@
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using StajEvrak.Api.Data;
 using StajEvrak.Api.Dtos;
@@ -61,7 +62,16 @@ builder.Services
         // frontend bunu görünce kullanıcıyı login sayfasına yönlendirir.
         options.Events = new JwtBearerEvents
         {
-            // Token yok / geçersiz / süresi dolmuş -> 403
+            // İmza ve süre geçerli olsa bile, çıkış (logout) yapılmış token'ı reddet.
+            OnTokenValidated = async context =>
+            {
+                var jti = context.Principal?.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+                var auth = context.HttpContext.RequestServices.GetRequiredService<AuthService>();
+
+                if (jti is null || await auth.IsTokenRevokedAsync(jti))
+                    context.Fail("Token çıkış yapılarak iptal edilmiş.");
+            },
+            // Token yok / geçersiz / süresi dolmuş / iptal edilmiş -> 403
             OnChallenge = async context =>
             {
                 context.HandleResponse();

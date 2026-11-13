@@ -133,6 +133,32 @@ public class AuthService
         return new LoginResult(LoginStatus.Success, user);
     }
 
+    // ------------------------------------------------------------------ ÇIKIŞ
+
+    /// <summary>
+    /// Hoca: "Çıkış işlemi token/session geçersiz kılar."
+    /// JWT süresi dolana kadar kendi başına geçerli olduğu için, çıkışta token'ın
+    /// kimliği (jti) revoked_tokens tablosuna yazılır. Program.cs'teki doğrulama
+    /// her istekte IsTokenRevokedAsync ile bu tabloya bakar.
+    /// </summary>
+    public async Task LogoutAsync(string jti, int userId, DateTime tokenExpiresAt)
+    {
+        var now = DateTime.UtcNow;
+
+        if (!await _db.RevokedTokens.AnyAsync(t => t.Jti == jti))
+            _db.RevokedTokens.Add(new RevokedToken(jti, userId, tokenExpiresAt, now));
+
+        // Süresi zaten dolmuş token'lar kendiliğinden geçersizdir; kayıtlarını tutmaya gerek yok.
+        var expired = await _db.RevokedTokens.Where(t => t.ExpiresAt < now).ToListAsync();
+        _db.RevokedTokens.RemoveRange(expired);
+
+        await _db.SaveChangesAsync();
+    }
+
+    /// <summary>Bu token çıkış yapılarak iptal edilmiş mi?</summary>
+    public Task<bool> IsTokenRevokedAsync(string jti) =>
+        _db.RevokedTokens.AnyAsync(t => t.Jti == jti);
+
     // ------------------------------------------------------------------ YARDIMCILAR
 
     private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();

@@ -71,6 +71,24 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// Çıkış. Kullanılan token iptal edilir; aynı token ile yapılan sonraki
+    /// istekler 403 alır. Frontend de kendi sakladığı token'ı silmelidir.
+    /// </summary>
+    [Authorize]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        var jti = User.FindFirstValue(JwtRegisteredClaimNames.Jti)!;
+        var userId = int.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
+        var exp = long.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Exp)!);
+        var expiresAt = DateTimeOffset.FromUnixTimeSeconds(exp).UtcDateTime;
+
+        await _auth.LogoutAsync(jti, userId, expiresAt);
+
+        return Ok(new { Message = "Çıkış yapıldı.", RedirectTo = "/login" });
+    }
+
+    /// <summary>
     /// Giriş yapmış kullanıcının bilgisi. Token yoksa / geçersizse 403 döner.
     /// Frontend sayfa yenilendiğinde token hâlâ geçerli mi diye buna bakabilir.
     /// </summary>
