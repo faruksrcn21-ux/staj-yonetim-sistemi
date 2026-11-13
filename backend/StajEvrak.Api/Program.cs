@@ -4,6 +4,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using StajEvrak.Api.Data;
+using StajEvrak.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,10 @@ builder.Services.AddOpenApi(); // /openapi/v1.json (sadece Development'ta açıl
 // Veritabanı: SQLite (bağlantı bilgisi appsettings.json -> ConnectionStrings:Default)
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Default")));
+
+// Auth servisleri (her HTTP isteği için yeni bir örnek oluşturulur)
+builder.Services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
+builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
 

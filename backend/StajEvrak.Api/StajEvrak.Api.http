@@ -1,9 +1,63 @@
 @host = http://localhost:5062
 
-# Bu dosya VS Code (REST Client) / Visual Studio ile endpoint'leri elle denemek içindir.
-# Endpoint'ler eklendikçe istekler buraya eklenecek.
+# Bu dosya VS Code (REST Client eklentisi) / Visual Studio ile endpoint'leri elle denemek içindir.
+# Her isteğin üstündeki "Send Request" yazısına tıklayarak gönderilir.
+# Uygulamayı çalıştırmak için: backend/StajEvrak.Api klasöründe "dotnet run"
 
-GET {{host}}/openapi/v1.json
-Accept: application/json
+### 1) Öğrenci kaydı -> 201
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "ali",
+  "email": "ali@test.com",
+  "password": "sifre123"
+}
+
+### 2) Aynı kullanıcı adıyla tekrar kayıt -> 409
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "ali",
+  "email": "baska@test.com",
+  "password": "sifre123"
+}
+
+### 3) Kullanıcı adıyla giriş -> 200
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "ali",
+  "password": "sifre123"
+}
+
+### 4) E-postayla giriş -> 200
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "ali@test.com",
+  "password": "sifre123"
+}
+
+### 5) Yanlış şifre -> 401 (5. denemede 423: hesap 15 dk kilitlenir)
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "ali",
+  "password": "yanlis"
+}
+
+### 6) Olmayan kullanıcı adı -> 401 (aynı IP'den 5. denemede 429: IP 15 dk kilitlenir)
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "olmayan_kullanici",
+  "password": "x"
+}
 
 ###
