@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Başvuru Yönetimi | Staj Takip ve Yönetim Sistemi</title>
+  <title>Admin Paneli | Staj Evrak Doğrulama ve Yönetim Sistemi</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap&subset=latin-ext" rel="stylesheet">
@@ -11,7 +11,7 @@
 </head>
 <body>
   <header class="topbar">
-    <strong>Staj Takip ve Yönetim Sistemi</strong>
+    <strong>Staj Evrak Doğrulama ve Yönetim Sistemi</strong>
     <div class="who">
       <span id="user-name"></span>
       <button type="button" class="btn" id="logout-btn">Çıkış yap</button>
@@ -19,58 +19,56 @@
   </header>
 
   <main class="container">
-    <div class="stats" id="stats" aria-label="Başvuru özeti"></div>
-
-    <section class="panel" aria-labelledby="table-title">
-      <h2 id="table-title">Staj başvuruları</h2>
-
-      <div class="toolbar">
-        <input id="search" type="search" placeholder="Öğrenci, numara veya firma ara" aria-label="Ara">
-        <select id="status-filter" aria-label="Duruma göre filtrele">
-          <option value="all">Tüm durumlar</option>
-          <option value="pending">Beklemede</option>
-          <option value="approved">Onaylandı</option>
-          <option value="rejected">Reddedildi</option>
-        </select>
+    <div class="panel">
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab is-active" data-tab="open">Yüklenen belgeler</button>
+        <button type="button" class="tab" data-tab="done">Tamamlananlar</button>
+        <button type="button" class="tab" data-tab="data">Test veri seti</button>
       </div>
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Öğrenci</th>
-              <th>Numara</th>
-              <th>Firma</th>
-              <th>Tarih aralığı</th>
-              <th>Durum</th>
-              <th><span class="sr-only">İşlem</span></th>
-            </tr>
-          </thead>
-          <tbody id="rows"></tbody>
-        </table>
-      </div>
-      <p id="empty" class="empty" hidden>Bu filtreye uyan başvuru yok.</p>
-    </section>
+      <section id="tab-open" class="tab-section">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Öğrenci</th><th>Numara</th><th>Dosya</th><th>Yüklenme</th><th>Durum</th><th>Teslime hazır</th><th></th></tr></thead>
+          <tbody id="rows-open"></tbody>
+        </table></div>
+      </section>
+
+      <section id="tab-done" class="tab-section" hidden>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Öğrenci</th><th>Numara</th><th>Dosya</th><th>Yüklenme</th><th>Durum</th><th>Teslime hazır</th><th></th></tr></thead>
+          <tbody id="rows-done"></tbody>
+        </table></div>
+      </section>
+
+      <section id="tab-data" class="tab-section" hidden>
+        <div class="field">
+          <label for="dataset-file">Test veri seti (CSV veya Excel)</label>
+          <input id="dataset-file" type="file" accept=".csv,.xlsx,.xls">
+          <p class="hint">Sütun sırası: ad soyad, TC no, uyruk, öğrenci no, doğum tarihi, adres, bölüm, teslim yılı, eski staj gün sayısı, e-posta, telefon, sağlık yardımı. İlk satır başlık olmalı.</p>
+        </div>
+        <button type="button" class="btn btn-solid" id="dataset-btn">Veri setini yükle</button>
+        <div class="table-wrap" style="margin-top:1rem"><table>
+          <thead id="data-head"></thead>
+          <tbody id="data-rows"></tbody>
+        </table></div>
+      </section>
+    </div>
   </main>
 
   <dialog id="review-dialog" aria-labelledby="dlg-title">
     <div class="dlg-body">
-      <h2 id="dlg-title">Başvuru incelemesi</h2>
+      <h2 id="dlg-title">Belge incelemesi</h2>
       <dl id="dlg-info"></dl>
-
-      <h3 class="muted">Yüklenen belgeler</h3>
-      <div id="dlg-docs"></div>
-
+      <div id="dlg-cmp"></div>
       <div class="field" style="margin-top:1rem">
-        <label for="feedback">Geri bildirim notu</label>
-        <textarea id="feedback" rows="3" placeholder="Reddederken neden belirt, onaylarken isteğe bağlı"></textarea>
+        <label for="status-select">Belge durumu</label>
+        <select id="status-select"></select>
       </div>
       <p id="dlg-message" class="message" role="alert" hidden></p>
-
       <div class="dlg-actions">
         <button type="button" class="btn" id="dlg-close">Kapat</button>
-        <button type="button" class="btn btn-reject" id="dlg-reject">Reddet</button>
-        <button type="button" class="btn btn-approve" id="dlg-approve">Onayla</button>
+        <button type="button" class="btn btn-reject" id="dlg-delete">Sil</button>
+        <button type="button" class="btn btn-solid" id="dlg-save">Durumu güncelle</button>
       </div>
     </div>
   </dialog>

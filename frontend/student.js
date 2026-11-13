@@ -1,115 +1,89 @@
-/* Öğrenci paneli - sadece student.html'de çalışır (app.js önce yüklenmeli) */
+/* Öğrenci ekranı - sadece student.html'de çalışır (app.js önce yüklenmeli) */
 (function () {
-  const user = Session.require(["ogrenci"]);
+  const user = Session.require(ROLE_STUDENT);
   if (!user) return;
 
-  const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+  const $ = id => document.getElementById(id);
+  const list = $("doc-list"), empty = $("empty"), dlg = $("upload-dialog");
+  const form = $("doc-form"), fileInput = $("file"), msg = $("form-message"), submitBtn = $("submit-btn");
+  let replaceId = null;
 
-  const listEl = document.getElementById("app-list");
-  const emptyEl = document.getElementById("empty");
-  const form = document.getElementById("app-form");
-  const fileInput = document.getElementById("files");
-  const fileList = document.getElementById("file-list");
-  const msg = document.getElementById("form-message");
-  const submitBtn = document.getElementById("submit-btn");
+  $("user-name").textContent = user.fullName;
+  $("logout-btn").addEventListener("click", () => Session.logout());
 
-  document.getElementById("user-name").textContent = user.fullName;
-  document.getElementById("logout-btn").addEventListener("click", () => Session.logout());
+  // Ek-16 verilerini elle girme formu (alanlar app.js'teki FIELDS'tan gelir)
+  $("fields").innerHTML = FIELDS.map(([k, label, type]) =>
+    '<div class="field"><label for="f_' + k + '">' + esc(label) + '</label><input id="f_' + k + '" name="' + k + '" type="' + type + '"></div>'
+  ).join("");
 
-  function showMessage(text) {
-    msg.textContent = text;
-    msg.className = "message is-error";
-    msg.hidden = !text;
+  function showMessage(text) { msg.textContent = text; msg.className = "message is-error"; msg.hidden = !text; }
+
+  function openForm(doc) {
+    form.reset(); showMessage("");
+    replaceId = doc ? doc.id : null;
+    $("dlg-title").textContent = doc ? "Düzelt ve yeniden yükle" : "Evrak yükle";
+    const base = doc ? doc.data : { adSoyad: user.fullName, ogrenciNo: user.studentNo || "", email: user.email };
+    FIELDS.forEach(([k]) => { $("f_" + k).value = base[k] || ""; });
+    dlg.showModal();
   }
 
-  /* ---- Başvuru listesi ---- */
-  function renderApps(apps) {
-    emptyEl.hidden = apps.length > 0;
-    listEl.innerHTML = apps
-      .slice()
-      .reverse() // en yeni üstte
-      .map(a => {
-        const docs = a.documents.length
-          ? '<ul class="docs">' + a.documents.map(d => "<li>" + esc(d) + "</li>").join("") + "</ul>"
-          : "";
-        const note = a.feedback
-          ? '<p class="note"><strong>Komisyon notu:</strong> ' + esc(a.feedback) + "</p>"
-          : "";
-        return (
-          '<li class="app-item is-' + esc(a.status) + '">' +
-            "<header><h3>" + esc(a.company) + "</h3>" + statusBadge(a.status) + "</header>" +
-            '<div class="muted">' + fmtDate(a.startDate) + " - " + fmtDate(a.endDate) + "</div>" +
-            docs + note +
-          "</li>"
-        );
-      })
-      .join("");
+  function render(docs) {
+    empty.hidden = docs.length > 0;
+    list.innerHTML = docs.slice().reverse().map(d => {
+      const actions = d.status === "completed"
+        ? '<p class="note">Bu belge tamamlandı, değiştirilemez ve silinemez.</p>'
+        : '<div class="row-actions"><button type="button" class="btn" data-act="redo" data-id="' + d.id + '">Düzelt ve yeniden yükle</button>' +
+          '<button type="button" class="btn" data-act="del" data-id="' + d.id + '">Sil</button></div>';
+      return '<li class="app-item"><header><h3>' + esc(d.fileName) + "</h3>" + statusBadge(d.status) + "</header>" +
+        '<div class="muted">Yüklenme: ' + fmtDateTime(d.uploadedAt) + "</div>" + cmpHtml(d.comparison) + actions + "</li>";
+    }).join("");
   }
 
-  async function loadApps() {
-    try {
-      renderApps(await api.getMyApplications());
-    } catch (err) {
-      toast(err.message, "error");
+  async function load() {
+    try { render(await api.getMyDocuments()); } catch (err) { toast(err.message, "error"); }
+  }
+
+  $("upload-btn").addEventListener("click", () => openForm(null));
+  $("cancel-btn").addEventListener("click", () => dlg.close());
+
+  list.addEventListener("click", async (e) => {
+    const b = e.target.closest("button[data-act]");
+    if (!b) return;
+    const id = Number(b.dataset.id);
+    if (b.dataset.act === "redo") {
+      const docs = await api.getMyDocuments();
+      return openForm(docs.find(d => d.id === id));
     }
-  }
-
-  /* ---- Dosya seçimi ---- */
-  function validFiles() {
-    const files = Array.from(fileInput.files);
-    for (const f of files) {
-      const isPdf = f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf");
-      if (!isPdf) return { error: f.name + " PDF değil. Sadece PDF yükleyebilirsin." };
-      if (f.size > MAX_SIZE) return { error: f.name + " 5 MB sınırını aşıyor." };
-    }
-    return { files };
-  }
-
-  fileInput.addEventListener("change", () => {
-    const res = validFiles();
-    if (res.error) {
-      showMessage(res.error);
-      fileInput.value = "";
-      fileList.innerHTML = "";
-      return;
-    }
-    showMessage("");
-    fileList.innerHTML = res.files
-      .map(f => "<li>" + esc(f.name) + " (" + Math.max(1, Math.round(f.size / 1024)) + " KB)</li>")
-      .join("");
+    if (!confirm("Bu belgeyi silmek istediğine emin misin?")) return;
+    try { await api.deleteDocument(id); toast("Belge silindi."); load(); } catch (err) { toast(err.message, "error"); }
   });
 
-  /* ---- Başvuru gönderme ---- */
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const company = form.elements.company.value.trim();
-    const startDate = form.elements.startDate.value;
-    const endDate = form.elements.endDate.value;
+    const data = {};
+    FIELDS.forEach(([k]) => { data[k] = $("f_" + k).value.trim(); });
+    const missing = FIELDS.filter(([k]) => !data[k]).map(f => f[1]);
+    if (missing.length) return showMessage("Şu alanları doldur: " + missing.join(", "));
 
-    if (company.length < 2) return showMessage("Firma adını gir.");
-    if (!startDate || !endDate) return showMessage("Başlangıç ve bitiş tarihini seç.");
-    if (endDate <= startDate) return showMessage("Bitiş tarihi başlangıçtan sonra olmalı.");
+    const file = fileInput.files[0];
+    if (!file) return showMessage("Bir belge seç.");
+    if (!ALLOWED_EXT.includes(extOf(file.name))) {
+      fileInput.value = "";
+      return showMessage("Desteklenmeyen format. Sadece .doc, .docx, .pdf, .jpeg ve .png yükleyebilirsin.");
+    }
 
-    const res = validFiles();
-    if (res.error) return showMessage(res.error);
-    if (res.files.length === 0) return showMessage("En az bir PDF belge yükle.");
-
-    showMessage("");
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Gönderiliyor...";
+    showMessage(""); submitBtn.disabled = true; submitBtn.textContent = "Yükleniyor...";
     try {
-      await api.submitApplication({ company, startDate, endDate, files: res.files });
-      form.reset();
-      fileList.innerHTML = "";
-      toast("Başvurun gönderildi. Durum: Beklemede.");
-      await loadApps();
+      const doc = await api.uploadDocument({ data, file, replaceId });
+      dlg.close();
+      toast(doc.comparison && doc.comparison.ready ? "Evrak yüklendi, teslime hazır." : "Evrak yüklendi, uyuşmayan alanlar var.");
+      load();
     } catch (err) {
       showMessage(err.message);
     } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Başvuruyu gönder";
+      submitBtn.disabled = false; submitBtn.textContent = "Yükle";
     }
   });
 
-  loadApps();
+  load();
 })();

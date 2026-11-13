@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Giriş | Staj Takip ve Yönetim Sistemi</title>
+  <title>Giriş | Staj Evrak Doğrulama ve Yönetim Sistemi</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap&subset=latin-ext" rel="stylesheet">
@@ -11,57 +11,47 @@
 </head>
 <body class="auth-page">
   <main class="auth-layout">
-
     <section class="auth-aside" aria-label="Sistem hakkında">
       <p class="brand">Kocaeli Üniversitesi</p>
-      <h1>Staj Takip ve Yönetim Sistemi</h1>
-      <p class="lead">Staj başvurunu yap, belgelerini yükle, sonucu takip et.</p>
-
+      <h1>Staj Evrak Doğrulama ve Yönetim Sistemi</h1>
+      <p class="lead">Ek-16 belgeni yükle, bilgilerini gir, teslime hazır olup olmadığını gör.</p>
       <ol class="flow">
-        <li><span class="dot dot-pending"></span><div><strong>Başvuru gönderildi</strong><small>Durum: Beklemede</small></div></li>
-        <li><span class="dot dot-review"></span><div><strong>Komisyon inceliyor</strong><small>Belgelerin kontrol edilir</small></div></li>
-        <li><span class="dot dot-approved"></span><div><strong>Karar bildirilir</strong><small>Onaylandı veya Reddedildi (not ile)</small></div></li>
+        <li><span class="dot dot-pending"></span><div><strong>Evrak yüklenir</strong><small>Durum: Yüklendi</small></div></li>
+        <li><span class="dot dot-review"></span><div><strong>Bilgiler karşılaştırılır</strong><small>İnceleniyor veya Hatalı / Eksik</small></div></li>
+        <li><span class="dot dot-approved"></span><div><strong>Admin onaylar</strong><small>Onaylandı, sonra Tamamlandı</small></div></li>
       </ol>
     </section>
 
     <section class="auth-card" aria-labelledby="form-title">
       <div class="tabs" role="tablist">
-        <button type="button" role="tab" id="tab-login" class="tab is-active" aria-selected="true" data-mode="login">Giriş yap</button>
-        <button type="button" role="tab" id="tab-register" class="tab" aria-selected="false" data-mode="register">Kayıt ol</button>
+        <button type="button" role="tab" class="tab is-active" aria-selected="true" data-mode="login">Giriş yap</button>
+        <button type="button" role="tab" class="tab" aria-selected="false" data-mode="register">Kayıt ol</button>
       </div>
-
       <h2 id="form-title">Hesabına giriş yap</h2>
 
       <form id="auth-form" novalidate>
-        <fieldset class="roles">
-          <legend>Rolünü seç</legend>
-          <label class="role"><input type="radio" name="role" value="ogrenci" checked><span>Öğrenci</span></label>
-          <label class="role"><input type="radio" name="role" value="komisyon"><span>Komisyon</span></label>
-          <label class="role"><input type="radio" name="role" value="yonetici"><span>Yönetici</span></label>
-        </fieldset>
-
         <div class="field" data-only="register">
           <label for="fullName">Ad soyad</label>
           <input id="fullName" name="fullName" type="text" autocomplete="name">
         </div>
-
-        <div class="field" data-only="register student">
+        <div class="field" data-only="register">
           <label for="studentNo">Öğrenci numarası</label>
           <input id="studentNo" name="studentNo" type="text" inputmode="numeric" autocomplete="off">
         </div>
-
         <div class="field">
           <label for="email">E-posta</label>
-          <input id="email" name="email" type="email" autocomplete="email" required>
+          <input id="email" name="email" type="email" autocomplete="email">
         </div>
-
         <div class="field">
           <label for="password">Şifre</label>
-          <input id="password" name="password" type="password" autocomplete="current-password" required>
+          <input id="password" name="password" type="password" autocomplete="current-password">
+        </div>
+        <div class="field" data-only="register">
+          <label for="password2">Şifre (tekrar)</label>
+          <input id="password2" name="password2" type="password" autocomplete="new-password">
         </div>
 
         <p id="form-message" class="message" role="alert" hidden></p>
-
         <button type="submit" id="submit-btn" class="btn btn-primary">Giriş yap</button>
       </form>
 
@@ -69,12 +59,10 @@
         <summary>Demo hesapları (sahte veri)</summary>
         <ul>
           <li>Öğrenci: ogrenci@kocaeli.edu.tr / 123456</li>
-          <li>Komisyon: komisyon@kocaeli.edu.tr / 123456</li>
-          <li>Yönetici: admin@kocaeli.edu.tr / 123456</li>
+          <li>Admin: admin@kocaeli.edu.tr / 123456</li>
         </ul>
       </details>
     </section>
-
   </main>
   <script src="app.js"></script>
 </body>
