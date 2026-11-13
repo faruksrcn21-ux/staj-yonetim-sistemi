@@ -1,9 +1,117 @@
 @host = http://localhost:5062
 
-# Bu dosya VS Code (REST Client) / Visual Studio ile endpoint'leri elle denemek içindir.
-# Endpoint'ler eklendikçe istekler buraya eklenecek.
+# Bu dosya VS Code (REST Client eklentisi) / Visual Studio ile endpoint'leri elle denemek içindir.
+# Her isteğin üstündeki "Send Request" yazısına tıklayarak gönderilir.
+# Uygulamayı çalıştırmak için: backend/StajEvrak.Api klasöründe "dotnet run"
 
-GET {{host}}/openapi/v1.json
-Accept: application/json
+### 1) Öğrenci kaydı -> 201
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "ali",
+  "email": "ali@test.com",
+  "password": "sifre123"
+}
+
+### 2) Aynı kullanıcı adıyla tekrar kayıt -> 409
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "ali",
+  "email": "baska@test.com",
+  "password": "sifre123"
+}
+
+### 3) Kullanıcı adıyla giriş -> 200 (yanıttaki token aşağıdaki isteklerde otomatik kullanılır)
+# @name login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "ali",
+  "password": "sifre123"
+}
+
+### 4) E-postayla giriş -> 200
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "ali@test.com",
+  "password": "sifre123"
+}
+
+### 5) Yanlış şifre -> 401 (5. denemede 423: hesap 15 dk kilitlenir)
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "ali",
+  "password": "yanlis"
+}
+
+### 6) Olmayan kullanıcı adı -> 401 (aynı IP'den 5. denemede 429: IP 15 dk kilitlenir)
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "olmayan_kullanici",
+  "password": "x"
+}
+
+# ------------------------------------------------------------------
+# YETKİLENDİRME (önce 3. isteği çalıştırıp token alın)
+# ------------------------------------------------------------------
+@token = {{login.response.body.$.token}}
+
+### 7) Token ile kendi bilgilerim -> 200
+GET {{host}}/api/auth/me
+Authorization: Bearer {{token}}
+
+### 8) Token olmadan -> 403 (redirectTo: /login)
+GET {{host}}/api/auth/me
+
+### 9) Öğrenci token'ı ile öğrenci endpoint'i -> 200
+GET {{host}}/api/role-check/student
+Authorization: Bearer {{token}}
+
+### 10) Öğrenci token'ı ile ADMIN endpoint'i -> 403 (redirectTo: /login)
+GET {{host}}/api/role-check/admin
+Authorization: Bearer {{token}}
+
+### 11) Çıkış -> 200 (token iptal edilir)
+POST {{host}}/api/auth/logout
+Authorization: Bearer {{token}}
+
+### 12) Çıkıştan sonra AYNI token ile istek -> 403 (token artık geçersiz)
+GET {{host}}/api/auth/me
+Authorization: Bearer {{token}}
+
+# ------------------------------------------------------------------
+# ADMIN (hesap uygulama açılışında seed ile oluşur; bilgiler .env dosyasında)
+# ------------------------------------------------------------------
+
+### 13) Admin girişi -> 200 (dashboardView: /admin)
+# Kullanıcı adı ve şifre .env dosyasından okunur (REST Client: $dotenv).
+# @name adminLogin
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "{{$dotenv AdminSeed__Username}}",
+  "password": "{{$dotenv AdminSeed__Password}}"
+}
+
+@adminToken = {{adminLogin.response.body.$.token}}
+
+### 14) Admin token'ı ile admin endpoint'i -> 200
+GET {{host}}/api/role-check/admin
+Authorization: Bearer {{adminToken}}
+
+### 15) Admin token'ı ile ÖĞRENCİ endpoint'i -> 403
+GET {{host}}/api/role-check/student
+Authorization: Bearer {{adminToken}}
 
 ###

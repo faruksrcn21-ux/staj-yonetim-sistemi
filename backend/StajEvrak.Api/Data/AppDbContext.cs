@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StajEvrak.Api.Models;
 
 namespace StajEvrak.Api.Data;
@@ -98,5 +99,18 @@ public class AppDbContext : DbContext
             e.Property(d => d.Phone).HasColumnName("phone").HasMaxLength(20);
             e.Property(d => d.HealthInsuranceStatus).HasColumnName("health_insurance_status").HasMaxLength(50);
         });
+
+        // ---- Tarih/saat ----
+        // Uygulama tüm zamanları UTC tutar. SQLite saat dilimi bilgisi saklamadığı için,
+        // okunan değerler "UTC" olarak işaretlenir (aksi halde yanıtta 'Z' kaybolur ve
+        // frontend saati yerel saat sanabilir).
+        var utcConverter = new ValueConverter<DateTime, DateTime>(
+            v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        foreach (var property in modelBuilder.Model.GetEntityTypes().SelectMany(t => t.GetProperties()))
+        {
+            if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
+                property.SetValueConverter(utcConverter);
+        }
     }
 }
