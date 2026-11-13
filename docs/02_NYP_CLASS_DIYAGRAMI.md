@@ -22,11 +22,17 @@ classDiagram
         -string passwordHash
         -string role
         -int failedAttempts
-        -boolean isLocked
-        +login(identifier, password) Token
-        +logout() void
-        +incrementFailedAttempts() void
+        -DateTime? lockedUntil
+        +isLocked(now) boolean
+        +registerFailedAttempt(now) void
+        +resetFailedAttempts() void
         +getDashboardView()* string
+    }
+
+    class AuthService {
+        +register(username, email, password, studentNo) Student
+        +login(identifier, password, ip) Token
+        +logout(jti) void
     }
 
     class Student {
@@ -70,6 +76,7 @@ classDiagram
 
     BaseUser <|-- Student : Inheritance
     BaseUser <|-- Admin : Inheritance
+    AuthService --> BaseUser : Authenticates
     IDocumentParser <|.. PdfDocumentParser : Implements
     IDocumentParser <|.. DocxDocumentParser : Implements
     Student --> IDocumentParser : Uses (Polymorphism)

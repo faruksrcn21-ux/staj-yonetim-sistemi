@@ -4,7 +4,8 @@ Bu dosya, 3 ekip üyesinin veritabanı tablo ve sütun isimlerinde birebir aynı
 
 ## 1. İlişki Özeti (Relationship Summary)
 * **`users` (1) ---> (N) `documents`**: Bir öğrencinin sisteme yüklediği birden fazla Ek-16 belgesi olabilir.
-* **`users` (1) ---> (N) `login_logs`**: Bir kullanıcının (veya IP'nin) birden fazla başarısız giriş denemesi loglanabilir.
+* **`users` (1) ---> (N) `login_logs`**: Bir kullanıcının (veya IP'nin) birden fazla başarısız giriş denemesi loglanabilir. Var olmayan kullanıcı adıyla yapılan denemelerde `user_id` NULL kalır.
+* **`users` (1) ---> (N) `revoked_tokens`**: Logout yapılan JWT'lerin `jti` değerleri saklanır; bu tablodaki token'lar geçersiz sayılır.
 * **`admin_test_dataset`**: Admin tarafından sisteme yüklenen referans öğrenci kayıtlarını tutar. Öğrencinin yüklediği belge ve form verileri bu tablodaki kayıtlarla (TC No / Öğrenci No üzerinden) karşılaştırılır.
 
 ---
@@ -19,8 +20,9 @@ Bu dosya, 3 ekip üyesinin veritabanı tablo ve sütun isimlerinde birebir aynı
 | `email` | VARCHAR(150) | Unique, Not Null |
 | `password_hash` | VARCHAR(255) | Not Null (Bcrypt/Argon2 ile hash'lenmiş) |
 | `role` | ENUM | `'ROLE_STUDENT'`, `'ROLE_ADMIN'` |
-| `failed_attempts` | INT | Default: `0` (5 olunca hesap kilitlenir) |
-| `is_locked` | BOOLEAN | Default: `FALSE` |
+| `student_no` | VARCHAR(20) | Nullable (sadece öğrenciler; test veri setiyle eşleşme için) |
+| `failed_attempts` | INT | Default: `0` (5 olunca hesap kilitlenir, başarılı girişte `0`'lanır) |
+| `locked_until` | TIMESTAMP | Nullable. Doluysa ve gelecekteyse hesap kilitlidir (15 dk) |
 | `created_at` | TIMESTAMP | Default: `CURRENT_TIMESTAMP` |
 
 ### B. `admin_test_dataset` (Admin Test Veri Seti Tablosu)
@@ -59,10 +61,20 @@ Bu dosya, 3 ekip üyesinin veritabanı tablo ve sütun isimlerinde birebir aynı
 | Sütun Adı | Veri Tipi | Kısıtlamalar / Açıklama |
 | :--- | :--- | :--- |
 | `id` | INT / UUID | Primary Key |
+| `user_id` | INT / UUID | Foreign Key (`users.id`), Nullable |
 | `attempted_identifier` | VARCHAR(150) | Girilmeye çalışılan kullanıcı adı / e-posta |
 | `ip_address` | VARCHAR(45) | İstek atan IP adresi |
 | `attempt_time` | TIMESTAMP | Default: `CURRENT_TIMESTAMP` |
-| `log_status` | VARCHAR(50) | `'FAILED_PASSWORD'`, `'ACCOUNT_LOCKED'` |
+| `log_status` | VARCHAR(50) | `'FAILED_PASSWORD'`, `'UNKNOWN_USER'`, `'ACCOUNT_LOCKED'` |
+
+### E. `revoked_tokens` (Logout ile Geçersiz Kılınan Token'lar)
+| Sütun Adı | Veri Tipi | Kısıtlamalar / Açıklama |
+| :--- | :--- | :--- |
+| `id` | INT / UUID | Primary Key |
+| `jti` | VARCHAR(64) | Unique, Not Null (JWT ID claim'i) |
+| `user_id` | INT / UUID | Foreign Key (`users.id`) |
+| `expires_at` | TIMESTAMP | Token'ın asıl bitiş zamanı (sonrasında satır silinebilir) |
+| `revoked_at` | TIMESTAMP | Default: `CURRENT_TIMESTAMP` |
 
 ---
 
@@ -72,6 +84,7 @@ Bu dosya, 3 ekip üyesinin veritabanı tablo ve sütun isimlerinde birebir aynı
 erDiagram
     USERS ||--o{ DOCUMENTS : "yukler"
     USERS ||--o{ LOGIN_LOGS : "loglanir"
+    USERS ||--o{ REVOKED_TOKENS : "cikis_yapar"
 
     USERS {
         int id PK
@@ -79,8 +92,9 @@ erDiagram
         string email
         string password_hash
         string role
+        string student_no
         int failed_attempts
-        boolean is_locked
+        datetime locked_until
         datetime created_at
     }
 
@@ -94,6 +108,7 @@ erDiagram
         json parsed_data
         json manual_form_data
         boolean is_ready_for_submission
+        string comparison_report
         datetime uploaded_at
     }
 
@@ -115,9 +130,18 @@ erDiagram
 
     LOGIN_LOGS {
         int id PK
+        int user_id FK
         string attempted_identifier
         string ip_address
         datetime attempt_time
         string log_status
+    }
+
+    REVOKED_TOKENS {
+        int id PK
+        string jti
+        int user_id FK
+        datetime expires_at
+        datetime revoked_at
     }
 ```

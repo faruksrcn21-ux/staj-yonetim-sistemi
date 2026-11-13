@@ -4,12 +4,35 @@
 ================================================================================
 
 [1] VİZE PRENSİPLERİ (HOCANIN TALİMATLARI)
--------------------------------------------------------------------------------- 
+--------------------------------------------------------------------------------
 1. Vizede olmayan (OCR, Google Form, Ek-17, detaylı alan kısıtları) vizeye kadar
    kodlanmayacaktır.
 2. Vizede "Ona bağlı kontroller" kuralı sadece dosya format ve uzantı kontrolünü kapsar.
 3. Sunumda kodun herhangi bir yeri sorulabileceği için her grup üyesi kodun ve
    algoritmanın tamamına hakim olmak zorundadır.
+
+
+================================================================================
+[1.5] TEKNOLOJİ KARARLARI VE ORTAK KURALLAR
+================================================================================
+* Backend   : C# + ASP.NET Core Web API (.NET 10 LTS)
+* ORM / DB  : Entity Framework Core + SQLite (kurulumsuz; migration'lar repoda,
+              .db dosyası repoya EKLENMEZ). Gerekirse provider tek satırla
+              PostgreSQL'e çevrilebilir.
+* Şifreleme : BCrypt (BCrypt.Net-Next paketi)
+* Oturum    : JWT (Bearer). Rol, token içinde "role" claim'i olarak taşınır.
+              Logout'ta token'ın "jti" değeri `revoked_tokens` tablosuna yazılır;
+              her istekte bu tablo kontrol edilir (geçersiz token -> 401).
+* Hesap Kilidi: Üst üste 5 hatalı şifrede hesap 15 dakika kilitlenir
+              (`locked_until`). Başarılı girişte sayaç sıfırlanır.
+              Var olmayan kullanıcı adıyla yapılan denemeler sadece loglanır.
+* Admin Hesabı: Kayıt ekranı yalnızca ROLE_STUDENT oluşturur. Admin hesabı
+              uygulama ilk açılışta seed (appsettings) ile oluşturulur.
+* Görsel Dosyalar (.jpeg/.png): OCR olmadığı için içerik okunamaz; kabul edilir
+              ama `parsed_data` boş kalır ve statü 'INCELENIYOR' olur.
+* [EKİPÇE KARAR VERİLECEK] 'TAMAMLANDI' statüsünü kim verir?
+              (Öneri: karşılaştırma başarılı -> 'ONAYLANDI'; admin onaylayınca
+              -> 'TAMAMLANDI'.)
 
 
 ================================================================================
@@ -21,19 +44,21 @@
 --------------------------------------------------------------------------------
 [KOD GÖREVLERİ]
 * Veritabanı Mimarisi (ERD Uygulaması):
-  - Kullanıcılar, Kullanıcı Rolleri, Oturum/Log kayıtları ve Admin Test Veri Seti
-    tablolarının veritabanında oluşturulması.
+  - users, login_logs, revoked_tokens, admin_test_dataset ve documents
+    tablolarının EF Core migration'ları ile oluşturulması (2. kişi documents
+    tablosunu bu şema üzerinden kullanır).
+  - Admin hesabının seed edilmesi.
 * Oturum Açma ve Kayıt Sistemi:
   - Öğrencilerin sistemde kendi hesaplarını oluşturması ve şifre belirleme servisleri.
   - Kullanıcı adı / e-posta + şifre ile giriş servisleri.
 * Güvenlik & Loglama:
   - Şifrelerin açık metin saklanmayıp veritabanında HASH'lenerek (Bcrypt/Argon2 vb.) tutulması.
   - Başarısız giriş denemelerinin loglanması.
-  - Üst üste 5 hatalı kullanıcı adı / şifre denemesinde hesabın kilitlenmesi mantığı.
+  - Üst üste 5 hatalı şifre denemesinde hesabın 15 dk kilitlenmesi mantığı.
 * Yetkilendirme Katmanı (RBAC):
-  - Session veya JWT içerisinde rol (ROLE_STUDENT, ROLE_ADMIN) taşınması.
-  - Yetkisiz istek atıldığında 403 Forbidden dönülmesi ve kullanıcı yönlendirmesi.
-  - Çıkış (Logout) yapıldığında session/token'ın geçersiz kılınması.
+  - JWT içerisinde rol (ROLE_STUDENT, ROLE_ADMIN) taşınması.
+  - Yetkisiz istek atıldığında 403 Forbidden dönülmesi (yönlendirme frontend'de).
+  - Çıkış (Logout) yapıldığında token'ın revoked_tokens ile geçersiz kılınması.
 * Nesne Yönelimli Programlama (NYP):
   - Encapsulation, Abstraction, Inheritance ve Polymorphism prensiplerinin 
     kullanıcı ve auth sınıflarında uygulanması.

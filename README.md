@@ -22,6 +22,14 @@ prolab3-staj-sistemi/
 
 ---
 
+## 🛠️ Teknolojiler
+
+- **Backend:** C# + ASP.NET Core Web API (.NET 10)
+- **Veritabanı:** SQLite + Entity Framework Core (migration'lar repoda)
+- **Kimlik Doğrulama:** JWT (rol claim'i) + BCrypt şifre hash'leme
+
+---
+
 ## 👥 Ekip Görev Dağılımı
 
 - **1. ve 2. Geliştirici:** Backend mimarisi, veritabanı tasarımı, yetkilendirme, iş kuralları ve API servisleri (`backend/`).
