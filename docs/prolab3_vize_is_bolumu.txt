@@ -10,6 +10,10 @@
 2. Vizede "Ona bağlı kontroller" kuralı sadece dosya format ve uzantı kontrolünü kapsar.
 3. Sunumda kodun herhangi bir yeri sorulabileceği için her grup üyesi kodun ve
    algoritmanın tamamına hakim olmak zorundadır.
+4. IEEE rapor metni grup üyeleri tarafından yazılacaktır. Yapay zekâ ile
+   oluşturulduğu tespit edilen raporlar değerlendirmeye alınmaz (Bölüm 8).
+5. Hocanın dokümanı ve soru-cevapları: docs/00_PROJE_ISTERLERI_VE_SSS.md
+   Plan ile çelişki olursa o dosya esas alınır.
 
 
 ================================================================================
@@ -25,14 +29,25 @@
               her istekte bu tablo kontrol edilir (geçersiz token -> 401).
 * Hesap Kilidi: Üst üste 5 hatalı şifrede hesap 15 dakika kilitlenir
               (`locked_until`). Başarılı girişte sayaç sıfırlanır.
-              Var olmayan kullanıcı adıyla yapılan denemeler sadece loglanır.
+* IP Kilidi : Dokümana göre "5 hatalı kullanıcı adı / şifre" denemesi de
+              kilitlemelidir. Var olmayan kullanıcı adıyla yapılan denemeler
+              de loglanır; aynı IP'den son 15 dk içinde 5 başarısız deneme
+              varsa o IP'den giriş 15 dk reddedilir (login_logs üzerinden).
+* Öğrenci <-> Test Veri Seti eşleşmesi: Öğrenci kayıt olurken öğrenci
+              numarasını girer (users.student_no). Karşılaştırma bu numarayla
+              bulunan admin_test_dataset kaydı üzerinden yapılır.
 * Admin Hesabı: Kayıt ekranı yalnızca ROLE_STUDENT oluşturur. Admin hesabı
               uygulama ilk açılışta seed (appsettings) ile oluşturulur.
 * Görsel Dosyalar (.jpeg/.png): OCR olmadığı için içerik okunamaz; kabul edilir
               ama `parsed_data` boş kalır ve statü 'INCELENIYOR' olur.
-* [EKİPÇE KARAR VERİLECEK] 'TAMAMLANDI' statüsünü kim verir?
-              (Öneri: karşılaştırma başarılı -> 'ONAYLANDI'; admin onaylayınca
-              -> 'TAMAMLANDI'.)
+* Statü Akışı (Doküman Bölüm 5): YUKLENDI -> INCELENIYOR -> HATALI_EKSIK
+              -> (düzeltilip yeniden yüklenir) -> ONAYLANDI -> TAMAMLANDI.
+              "Onaylanan belgeler Tamamlandı statüsüne geçer."
+              [EKİPÇE KARAR VERİLECEK] ONAYLANDI -> TAMAMLANDI geçişi otomatik
+              mi, admin onayıyla mı? (Öneri: karşılaştırma başarılı ->
+              ONAYLANDI -> otomatik TAMAMLANDI.)
+* TAMAMLANDI yetkisi (Hoca cevabı #3): Öğrenci hiçbir şekilde değiştiremez /
+              silemez; admin güncelleyebilir ve silebilir.
 
 
 ================================================================================
