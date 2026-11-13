@@ -82,3 +82,8 @@ obj/
 *.booproj
 *.svclog
 
+
+# SQLite veritabani dosyalari
+*.db
+*.db-shm
+*.db-wal

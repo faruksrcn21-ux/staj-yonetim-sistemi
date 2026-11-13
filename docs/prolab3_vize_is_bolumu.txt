@@ -4,13 +4,26 @@
 ================================================================================
 
 [1] VİZE PRENSİPLERİ (HOCANIN TALİMATLARI)
---------------------------------------------------------------------------------
-1. Yalnızca vize aşamasında istenenler yapılacaktır.
-2. Vizede olmayan (OCR, Google Form, Ek-17, detaylı alan kısıtları) vizeye kadar
-   kesinlikle kodlanmayacaktır.
-3. Vizede "Ona bağlı kontroller" kuralı sadece dosya format ve uzantı kontrolünü kapsar.
-4. Sunumda kodun herhangi bir yeri sorulabileceği için her grup üyesi kodun ve
+-------------------------------------------------------------------------------- 
+1. Vizede olmayan (OCR, Google Form, Ek-17, detaylı alan kısıtları) vizeye kadar
+   kodlanmayacaktır.
+2. Vizede "Ona bağlı kontroller" kuralı sadece dosya format ve uzantı kontrolünü kapsar.
+3. Sunumda kodun herhangi bir yeri sorulabileceği için her grup üyesi kodun ve
    algoritmanın tamamına hakim olmak zorundadır.
+4. IEEE rapor metni grup üyeleri tarafından yazılacaktır. Yapay zekâ ile
+   oluşturulduğu tespit edilen raporlar değerlendirmeye alınmaz.
+5. Hocanın dokümanı ve soru-cevapları: docs/00_PROJE_ISTERLERI_VE_SSS.md
+
+
+================================================================================
+[1.5] ORTAK TEKNOLOJİLER (TÜM EKİP AYNISINI KULLANIR)
+================================================================================
+* Backend   : C# + ASP.NET Core Web API (.NET 10)
+* Veritabanı: Entity Framework Core + SQLite (migration'lar repoda,
+              .db dosyası repoya eklenmez)
+* Kimlik Doğrulama: JWT (Bearer). Rol (ROLE_STUDENT / ROLE_ADMIN) token
+              içinde taşınır. Korumalı isteklerde
+              "Authorization: Bearer <token>" header'ı gönderilir.
 
 
 ================================================================================
@@ -87,17 +100,3 @@
   - UML Diyagramları (Use Case vb.)
   - Class (Sınıf) Diyagramı (NYP yapısını gösteren)
   - Veritabanı ER Diyagramı
-
-
-================================================================================
-[3] VİZE SUNUMU VE ORTAK SORUMLULUKLAR
-================================================================================
-1. Kodlama ve Arayüz Bitişi Sonrası Toplantı:
-   - Sunumdan önce tüm grup toplanıp yazılan kodları ve veritabanı akışını 
-     birbirine baştan sona anlatacaktır.
-2. Sunuma Katılım:
-   - Sunum günü 3 grup üyesinin de fiziksel olarak bulunması zorunludur.
-3. Kod Hakimiyeti:
-   - Hocanın rastgele sorabileceği kod ve algoritma soruları için herkes tüm projeye 
-     hakim olacaktır.
-================================================================================

@@ -1,0 +1,9 @@
+@host = http://localhost:5062
+
+# Bu dosya VS Code (REST Client) / Visual Studio ile endpoint'leri elle denemek içindir.
+# Endpoint'ler eklendikçe istekler buraya eklenecek.
+
+GET {{host}}/openapi/v1.json
+Accept: application/json
+
+###

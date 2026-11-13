@@ -1,4 +1,4 @@
-# Prolab 3 - Staj Takip ve Yönetim Sistemi
+# Staj Takip ve Yönetim Sistemi
 
 Bu proje, Kocaeli Üniversitesi Programlama Laboratuvarı 3 dersi kapsamında geliştirilen **Staj Takip ve Yönetim Sistemi** projesidir.
 
@@ -11,6 +11,7 @@ prolab3-staj-sistemi/
 ├── backend/                  # 1. ve 2. Kişinin geliştireceği Backend (API / Veritabanı / İş Mantığı)
 ├── frontend/                 # 3. Kişinin geliştireceği Kullanıcı Arayüzü (Web / UI)
 ├── docs/                     # Proje dokümantasyonu, diyagramlar ve iş bölümü
+│   ├── 00_PROJE_ISTERLERI_VE_SSS.md   # Hocanın isterleri + soru-cevaplar
 │   ├── 01_VERITABANI_ER_DIYAGRAMI.md
 │   ├── 02_NYP_CLASS_DIYAGRAMI.md
 │   ├── 03_AKIS_DIYAGRAMI_FLOWCHART.md
@@ -22,19 +23,17 @@ prolab3-staj-sistemi/
 
 ---
 
+## 🛠️ Teknolojiler
+
+- **Backend:** C# + ASP.NET Core Web API (.NET 10)
+- **Veritabanı:** SQLite + Entity Framework Core
+- **Kimlik Doğrulama:** JWT (rol bilgisi token içinde)
+
+---
+
 ## 👥 Ekip Görev Dağılımı
 
 - **1. ve 2. Geliştirici:** Backend mimarisi, veritabanı tasarımı, yetkilendirme, iş kuralları ve API servisleri (`backend/`).
 - **3. Geliştirici:** Kullanıcı arayüzü tasarımı, bileşenler ve API entegrasyonu (`frontend/`).
 
 ---
-
-## 📄 Dokümantasyon
-
-Tüm analiz ve tasarım dokümanları `docs/` klasörü içerisinde yer almaktadır:
-- `01_VERITABANI_ER_DIYAGRAMI.md`: İlişkisel veritabanı tasarımı ve ER şemaları
-- `02_NYP_CLASS_DIYAGRAMI.md`: Nesne Yönelimli Programlama sınıf ve kalıtım yapıları
-- `03_AKIS_DIYAGRAMI_FLOWCHART.md`: Sistem süreç akış şemaları
-- `04_UML_USE_CASE_DIYAGRAMI.md`: Kullanım senaryoları ve aktör etkileşimleri
-- `prolab3_vize_is_bolumu.txt`: Vize dönemi görev ve sorumluluk paylaşımı
-
