@@ -1,6 +1,6 @@
 /* Öğrenci paneli - sadece student.html'de çalışır (app.js önce yüklenmeli) */
 (function () {
-  const user = Session.require(["ogrenci"]);
+  const user = Session.require([ROLES.STUDENT]);
   if (!user) return;
 
   const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -13,7 +13,7 @@
   const msg = document.getElementById("form-message");
   const submitBtn = document.getElementById("submit-btn");
 
-  document.getElementById("user-name").textContent = user.fullName;
+  document.getElementById("user-name").textContent = user.username;
   document.getElementById("logout-btn").addEventListener("click", () => Session.logout());
 
   function showMessage(text) {

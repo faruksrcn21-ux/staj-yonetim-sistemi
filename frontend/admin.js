@@ -1,6 +1,6 @@
 /* Komisyon / Yönetici paneli - sadece admin.html'de çalışır (app.js önce yüklenmeli) */
 (function () {
-  const user = Session.require(["komisyon", "yonetici"]);
+  const user = Session.require([ROLES.ADMIN]);
   if (!user) return;
 
   const rowsEl = document.getElementById("rows");
@@ -20,7 +20,7 @@
   let applications = [];
   let current = null; // incelenen başvuru
 
-  document.getElementById("user-name").textContent = user.fullName;
+  document.getElementById("user-name").textContent = user.username;
   document.getElementById("logout-btn").addEventListener("click", () => Session.logout());
 
   /* ---- Özet sayaçları ---- */
