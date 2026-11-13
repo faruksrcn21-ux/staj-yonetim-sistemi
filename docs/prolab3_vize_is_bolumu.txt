@@ -4,12 +4,11 @@
 ================================================================================
 
 [1] VİZE PRENSİPLERİ (HOCANIN TALİMATLARI)
---------------------------------------------------------------------------------
-1. Yalnızca vize aşamasında istenenler yapılacaktır.
-2. Vizede olmayan (OCR, Google Form, Ek-17, detaylı alan kısıtları) vizeye kadar
-   kesinlikle kodlanmayacaktır.
-3. Vizede "Ona bağlı kontroller" kuralı sadece dosya format ve uzantı kontrolünü kapsar.
-4. Sunumda kodun herhangi bir yeri sorulabileceği için her grup üyesi kodun ve
+-------------------------------------------------------------------------------- 
+1. Vizede olmayan (OCR, Google Form, Ek-17, detaylı alan kısıtları) vizeye kadar
+   kodlanmayacaktır.
+2. Vizede "Ona bağlı kontroller" kuralı sadece dosya format ve uzantı kontrolünü kapsar.
+3. Sunumda kodun herhangi bir yeri sorulabileceği için her grup üyesi kodun ve
    algoritmanın tamamına hakim olmak zorundadır.
 
 
@@ -87,17 +86,3 @@
   - UML Diyagramları (Use Case vb.)
   - Class (Sınıf) Diyagramı (NYP yapısını gösteren)
   - Veritabanı ER Diyagramı
-
-
-================================================================================
-[3] VİZE SUNUMU VE ORTAK SORUMLULUKLAR
-================================================================================
-1. Kodlama ve Arayüz Bitişi Sonrası Toplantı:
-   - Sunumdan önce tüm grup toplanıp yazılan kodları ve veritabanı akışını 
-     birbirine baştan sona anlatacaktır.
-2. Sunuma Katılım:
-   - Sunum günü 3 grup üyesinin de fiziksel olarak bulunması zorunludur.
-3. Kod Hakimiyeti:
-   - Hocanın rastgele sorabileceği kod ve algoritma soruları için herkes tüm projeye 
-     hakim olacaktır.
-================================================================================
