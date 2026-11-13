@@ -1,0 +1,103 @@
+================================================================================
+          PROLAB 3 - STAJ EVRAK DOĞRULAMA VE YÖNETİM SİSTEMİ
+               3 KİŞİLİK GRUP İÇİN VİZE İŞ BÖLÜMÜ PLANI
+================================================================================
+
+[1] VİZE PRENSİPLERİ (HOCANIN TALİMATLARI)
+--------------------------------------------------------------------------------
+1. Yalnızca vize aşamasında istenenler yapılacaktır.
+2. Vizede olmayan (OCR, Google Form, Ek-17, detaylı alan kısıtları) vizeye kadar
+   kesinlikle kodlanmayacaktır.
+3. Vizede "Ona bağlı kontroller" kuralı sadece dosya format ve uzantı kontrolünü kapsar.
+4. Sunumda kodun herhangi bir yeri sorulabileceği için her grup üyesi kodun ve
+   algoritmanın tamamına hakim olmak zorundadır.
+
+
+================================================================================
+[2] KİŞİ KİŞİ DETAYLI VİZE GÖREV DAĞILIMI
+================================================================================
+
+--------------------------------------------------------------------------------
+1. GELİŞTİRİCİ (BACKEND, AUTH & GÜVENLİK MİMARI)
+--------------------------------------------------------------------------------
+[KOD GÖREVLERİ]
+* Veritabanı Mimarisi (ERD Uygulaması):
+  - Kullanıcılar, Kullanıcı Rolleri, Oturum/Log kayıtları ve Admin Test Veri Seti
+    tablolarının veritabanında oluşturulması.
+* Oturum Açma ve Kayıt Sistemi:
+  - Öğrencilerin sistemde kendi hesaplarını oluşturması ve şifre belirleme servisleri.
+  - Kullanıcı adı / e-posta + şifre ile giriş servisleri.
+* Güvenlik & Loglama:
+  - Şifrelerin açık metin saklanmayıp veritabanında HASH'lenerek (Bcrypt/Argon2 vb.) tutulması.
+  - Başarısız giriş denemelerinin loglanması.
+  - Üst üste 5 hatalı kullanıcı adı / şifre denemesinde hesabın kilitlenmesi mantığı.
+* Yetkilendirme Katmanı (RBAC):
+  - Session veya JWT içerisinde rol (ROLE_STUDENT, ROLE_ADMIN) taşınması.
+  - Yetkisiz istek atıldığında 403 Forbidden dönülmesi ve kullanıcı yönlendirmesi.
+  - Çıkış (Logout) yapıldığında session/token'ın geçersiz kılınması.
+* Nesne Yönelimli Programlama (NYP):
+  - Encapsulation, Abstraction, Inheritance ve Polymorphism prensiplerinin 
+    kullanıcı ve auth sınıflarında uygulanması.
+
+--------------------------------------------------------------------------------
+2. GELİŞTİRİCİ (BELGE İŞLEME, VERİ KARŞILAŞTIRMA & ADMİN SERVİSLERİ)
+--------------------------------------------------------------------------------
+[KOD GÖREVLERİ]
+* Evrak Yükleme ve Format Kontrolü:
+  - Yüklenen dosya formatı denetimi (.doc, .docx, .pdf, .jpeg, .png kabulü, 
+    diğer formatların reddedilmesi ve uyarı dönülmesi).
+* Belgeden Otomatik Veri Okuma (OCR OLMADAN):
+  - Yüklenen Ek-16 belgesindeki metinlerin .docx / PDF kütüphaneleri ile 
+    arka planda otomatik okunması.
+* Veri Karşılaştırma Mantığı:
+  - Kullanıcının arayüzden manuel girdiği veriler ile belgeden kütüphaneyle okunan 
+    verilerin karşılaştırılması. Belgenin teslime hazır olup olmadığının kontrolü.
+* Admin Test Veri Seti Yönetimi:
+  - Admin'in yükleyeceği test veri setini (CSV/Excel) okuma ve veritabanına aktarma.
+  - Test veri setindeki sütunlar: Öğrenci Ad Soyad, TC No, Uyruk, Öğrenci No,
+    Doğum Tarihi, Adres, Bölüm, Teslim Yılı, Eski Staj Gün Sayısı, E-posta, 
+    Telefon No, Sağlık Yardımı Statüsü.
+  - Belgedeki/formdaki veriler ile test veri setindeki kullanıcı verilerini karşılaştırma.
+* Tamamlandı Statüsü Yetki Servisi:
+  - "Tamamlandı" statüsündeki belgeyi öğrencinin değiştirememesi/stilememesi,
+    admin'in ise güncelleyip silebilmesi yetki mantığı.
+
+--------------------------------------------------------------------------------
+3. GELİŞTİRİCİ (FRONTEND ARAYÜZLERİ & IEEE RAPOR / DİYAGRAM DOKÜMANTASYONU)
+--------------------------------------------------------------------------------
+[ARAYÜZ GÖREVLERİ]
+* Giriş ve Kayıt Ekranları (Login / Register):
+  - Kullanıcının kendi hesabını oluşturduğu ve giriş yaptığı arayüz.
+* Öğrenci Ekranı:
+  - "Evrak Yükle" butonu.
+  - Ek-16 belgesi yüklenirken öğrencinin verileri (öğrenci bilgileri, tarihler vb.) 
+    MANUEL olarak gireceği form ekranı.
+  - Karşılaştırma sonucunu ve belgenin teslime hazır olma durumunu gösteren ekran.
+* Admin Ekranı:
+  - Admin için test veri seti yükleme butonu ve ekranı.
+  - Tamamlanan ve yüklenen başvuruları listeleme, silme/güncelleme ekranı.
+
+[RAPOR VE DİYAGRAM GÖREVLERİ]
+* IEEE Formatında Rapor Hazırlığı:
+  - En az 4 sayfa uzunluğunda IEEE standardında rapor yazımı.
+  - Rapor bölümleri: Özet, Giriş, Yöntem (Algoritma Açıklaması), Akış Diyagramı, 
+    UML Diyagramları, Class Diyagramı, Veritabanı ER Diyagramı, Kaba Kod (Pseudocode) ve Sonuç.
+* Diyagramların Çizimi:
+  - Akış Diyagramı (Flowchart)
+  - UML Diyagramları (Use Case vb.)
+  - Class (Sınıf) Diyagramı (NYP yapısını gösteren)
+  - Veritabanı ER Diyagramı
+
+
+================================================================================
+[3] VİZE SUNUMU VE ORTAK SORUMLULUKLAR
+================================================================================
+1. Kodlama ve Arayüz Bitişi Sonrası Toplantı:
+   - Sunumdan önce tüm grup toplanıp yazılan kodları ve veritabanı akışını 
+     birbirine baştan sona anlatacaktır.
+2. Sunuma Katılım:
+   - Sunum günü 3 grup üyesinin de fiziksel olarak bulunması zorunludur.
+3. Kod Hakimiyeti:
+   - Hocanın rastgele sorabileceği kod ve algoritma soruları için herkes tüm projeye 
+     hakim olacaktır.
+================================================================================
