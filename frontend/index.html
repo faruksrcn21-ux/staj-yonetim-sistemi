@@ -33,26 +33,23 @@
       <h2 id="form-title">Hesabına giriş yap</h2>
 
       <form id="auth-form" novalidate>
-        <fieldset class="roles">
-          <legend>Rolünü seç</legend>
-          <label class="role"><input type="radio" name="role" value="ogrenci" checked><span>Öğrenci</span></label>
-          <label class="role"><input type="radio" name="role" value="komisyon"><span>Komisyon</span></label>
-          <label class="role"><input type="radio" name="role" value="yonetici"><span>Yönetici</span></label>
-        </fieldset>
+        <!-- Rol seçilmez: rol girişte sunucudan gelir (ROLE_STUDENT / ROLE_ADMIN). -->
+
+        <!-- Giriş: kullanıcı adı veya e-posta (hoca: "Kullanıcı adı / e-posta + şifre") -->
+        <div class="field" data-only="login">
+          <label for="identifier">Kullanıcı adı veya e-posta</label>
+          <input id="identifier" name="identifier" type="text" autocomplete="username">
+        </div>
+
+        <!-- Kayıt: sadece öğrenci hesabı oluşturulur -->
+        <div class="field" data-only="register">
+          <label for="username">Kullanıcı adı</label>
+          <input id="username" name="username" type="text" autocomplete="username">
+        </div>
 
         <div class="field" data-only="register">
-          <label for="fullName">Ad soyad</label>
-          <input id="fullName" name="fullName" type="text" autocomplete="name">
-        </div>
-
-        <div class="field" data-only="register student">
-          <label for="studentNo">Öğrenci numarası</label>
-          <input id="studentNo" name="studentNo" type="text" inputmode="numeric" autocomplete="off">
-        </div>
-
-        <div class="field">
           <label for="email">E-posta</label>
-          <input id="email" name="email" type="email" autocomplete="email" required>
+          <input id="email" name="email" type="email" autocomplete="email">
         </div>
 
         <div class="field">
@@ -66,11 +63,10 @@
       </form>
 
       <details class="demo">
-        <summary>Demo hesapları (sahte veri)</summary>
+        <summary>Demo hesapları (sadece sahte veri modunda: USE_MOCK = true)</summary>
         <ul>
-          <li>Öğrenci: ogrenci@kocaeli.edu.tr / 123456</li>
-          <li>Komisyon: komisyon@kocaeli.edu.tr / 123456</li>
-          <li>Yönetici: admin@kocaeli.edu.tr / 123456</li>
+          <li>Öğrenci: ogrenci / 123456</li>
+          <li>Admin: admin / 123456</li>
         </ul>
       </details>
     </section>
