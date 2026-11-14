@@ -144,9 +144,12 @@ function fromApiDoc(d) {
     fileName: d.fileName, uploadedAt: d.uploadedAt,
     status: STATUS_FROM_API[d.status] || d.status,
     data,
-    // Henüz karşılaştırılmamış belgede (Yüklendi, rapor yok) sonuç gösterilmez.
-    comparison: d.status === "YUKLENDI" && !d.comparisonReport ? null : {
+    // Karşılaştırma sonucu / rapor yoksa (ör. Yüklendi veya admin henüz incelemedeyken)
+    // "teslime hazır değil" yazılmaz; sonuç alanı hiç gösterilmez.
+    comparison: !d.comparisonReport && !d.isReadyForSubmission ? null : {
       ready: d.isReadyForSubmission,
+      // Karşılaştırma raporu olmadan hazır sayıldıysa bunu admin onayı sağlamıştır.
+      byAdmin: d.isReadyForSubmission && !d.comparisonReport,
       note: report ? (report.note || "") : (d.comparisonReport || ""),
       mismatches: report && Array.isArray(report.mismatches) ? report.mismatches : []
     }
@@ -281,6 +284,7 @@ const api = {
       if (!reason || reason.trim().length < 3) throw new Error("Sebep en az 3 karakter olmalıdır.");
       doc.comparison = { ready: false, note: reason.trim(), mismatches: [] };
     }
+    if (status === "completed") doc.comparison = { ...(doc.comparison || { note: "", mismatches: [] }), ready: true }; // onay = teslime hazır
     doc.status = status; MockDB.save(db);
     return doc;
   },
@@ -333,7 +337,9 @@ function toast(text, type) {
 // Karşılaştırma sonucu: teslime hazır mı, değilse hangi alanlar uyuşmuyor
 function cmpHtml(c) {
   if (!c) return "";
-  if (c.ready) return '<p class="ready">Teslime hazır: belgedeki bilgiler girdiklerinle uyuşuyor.</p>';
+  if (c.ready) return '<p class="ready">' + (c.byAdmin
+    ? "Teslime hazır: belge admin tarafından onaylandı."
+    : "Teslime hazır: belgedeki bilgiler girdiklerinle uyuşuyor.") + "</p>";
   let html = '<p class="not-ready">Teslime hazır değil.' + (c.note ? " " + esc(c.note) : "") + "</p>";
   if (c.mismatches && c.mismatches.length) {
     html += '<div class="table-wrap"><table class="cmp"><thead><tr><th>Alan</th><th>Girilen</th><th>Belgeden okunan</th></tr></thead><tbody>' +
@@ -354,7 +360,9 @@ const Session = {
   require(role) {
     const u = this.user();
     if (!u) { window.location.href = "index.html"; return null; }
-    if (u.role !== role) { window.location.href = "index.html?reason=forbidden"; return null; }
+    // Hoca: "Yetkisiz istekler 403 döner ve login sayfasına yönlendirilir."
+    // Oturum silinir; yoksa giriş sayfası açık oturumu görüp kullanıcıyı geri gönderir ve 403 mesajı görünmez.
+    if (u.role !== role) { this.clear(); window.location.href = "index.html?reason=forbidden"; return null; }
     return u;
   },
   async logout() {

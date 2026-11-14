@@ -10,7 +10,8 @@ namespace StajEvrak.Api.Models;
 ///   Yüklendi    → İnceleniyor  : StartReview()             (sistem, karşılaştırma başlarken)
 ///   İnceleniyor → Hatalı/Eksik : RecordComparisonResult()  (sistem, uyuşmazlık varsa)
 ///                                MarkDefective()           (admin elle; ör. okunamayan JPEG/PNG)
-///   İnceleniyor → Onaylandı → Tamamlandı : Approve()       (admin onaylar, Tamamlandı'ya otomatik geçer)
+///   İnceleniyor → Onaylandı → Tamamlandı : Approve()       (admin onaylar, belge teslime hazır sayılır
+///                                                           ve Tamamlandı'ya otomatik geçer)
 ///   Herhangi bir statü → Yüklendi : ReplaceFile()         (düzeltilip yeniden yükleme)
 ///
 /// Kapsülleme: Alanlar dışarıdan doğrudan değiştirilemez (private set). Statü sadece
@@ -117,6 +118,7 @@ public class Document
     {
         EnsureStatus(DocumentStatus.Inceleniyor, "onaylanamaz");
         Status = DocumentStatus.Onaylandi;
+        IsReadyForSubmission = true; // admin onayladıysa belge teslime hazırdır
         Complete();
     }
 
