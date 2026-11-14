@@ -30,35 +30,21 @@
       <h2 id="form-title">Hesabına giriş yap</h2>
 
       <form id="auth-form" novalidate>
-<<<<<<< HEAD
-        <div class="field" data-only="register">
-          <label for="fullName">Ad soyad</label>
-          <input id="fullName" name="fullName" type="text" autocomplete="name">
-        </div>
-        <div class="field" data-only="register">
-          <label for="studentNo">Öğrenci numarası</label>
-          <input id="studentNo" name="studentNo" type="text" inputmode="numeric" autocomplete="off">
-        </div>
-        <div class="field">
-=======
         <!-- Rol seçilmez: rol girişte sunucudan gelir (ROLE_STUDENT / ROLE_ADMIN). -->
-
         <!-- Giriş: kullanıcı adı veya e-posta (hoca: "Kullanıcı adı / e-posta + şifre") -->
         <div class="field" data-only="login">
           <label for="identifier">Kullanıcı adı veya e-posta</label>
           <input id="identifier" name="identifier" type="text" autocomplete="username">
         </div>
-
-        <!-- Kayıt: sadece öğrenci hesabı oluşturulur -->
+        <!-- Kayıt: sadece öğrenci hesabı oluşturulur, şifreyi öğrenci belirler (hoca cevabı #4) -->
         <div class="field" data-only="register">
           <label for="username">Kullanıcı adı</label>
           <input id="username" name="username" type="text" autocomplete="username">
         </div>
-
         <div class="field" data-only="register">
->>>>>>> origin/main
           <label for="email">E-posta</label>
           <input id="email" name="email" type="email" autocomplete="email">
+          <p class="hint">Test veri setindeki e-postanla aynı olmalı; bilgilerin bu e-postayla eşleştirilir.</p>
         </div>
         <div class="field">
           <label for="password">Şifre</label>
@@ -76,13 +62,8 @@
       <details class="demo">
         <summary>Demo hesapları (sadece sahte veri modunda: USE_MOCK = true)</summary>
         <ul>
-<<<<<<< HEAD
-          <li>Öğrenci: ogrenci@kocaeli.edu.tr / 123456</li>
-          <li>Admin: admin@kocaeli.edu.tr / 123456</li>
-=======
           <li>Öğrenci: ogrenci / 123456</li>
           <li>Admin: admin / 123456</li>
->>>>>>> origin/main
         </ul>
       </details>
     </section>
