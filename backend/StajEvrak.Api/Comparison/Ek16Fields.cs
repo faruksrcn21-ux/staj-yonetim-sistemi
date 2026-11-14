@@ -2,10 +2,8 @@ using StajEvrak.Api.Models;
 
 namespace StajEvrak.Api.Comparison;
 
-// Test veri setindeki 12 sütunun karşılaştırma kuralları.
-// Anahtarlar frontend'deki form alanlarıyla aynıdır (manualFormData bu anahtarlarla gelir).
-// Etiketler KOÜ Mühendislik Fakültesi Ek-16 "Staj Kabul Formu"ndaki yazılışlardır;
-// belgede bir alan bulunamıyorsa yeni yazılış buraya eklenir.
+// Veri setindeki 12 sütun; anahtarlar frontend'deki form alanlarıyla aynıdır.
+// Etiketler KOÜ Ek-16 "Staj Kabul Formu"ndaki yazılışlardır.
 public static class Ek16Fields
 {
     public static readonly Ek16Field TcNo = new DigitsField("tcNo", "TC kimlik no",
@@ -42,7 +40,6 @@ public static class Ek16Fields
         ("e-posta adresi / telefon no", new[] { Email, Phone }),
     };
 
-    // Veri setindeki kaydı aynı anahtarlarla sözlüğe çevirir.
     public static Dictionary<string, string> FromDataset(AdminTestDataset d) => new()
     {
         ["adSoyad"] = d.FullName,

@@ -1,7 +1,6 @@
 namespace StajEvrak.Api.Parsing;
 
-// Belgedeki bir metin parçası ve konumu. X soldan sağa, Y yukarıdan aşağıya artar.
-// PDF'te konum sayfadaki noktadır; Word tablosunda sütun ve satır sırasından üretilir.
+// Metin parçası ve konumu (X soldan sağa, Y yukarıdan aşağıya artar).
 public sealed record TextCell(string Text, double X, double Y);
 
 // Belgeden okunan ham içerik; oluşturulduktan sonra değiştirilemez.
