@@ -33,6 +33,7 @@ builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<DocumentService>();
 builder.Services.AddScoped<StudentDatasetMatcher>();
 builder.Services.AddDatasetModule();
+builder.Services.AddDocumentUploadModule();
 
 // ---- JWT ayarları ----
 var jwtSection = builder.Configuration.GetSection(JwtOptions.SectionName);
