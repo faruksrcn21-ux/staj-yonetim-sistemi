@@ -105,10 +105,15 @@
   $("dataset-btn").addEventListener("click", async () => {
     const file = $("dataset-file").files[0];
     if (!file) return toast("Bir dosya seç.", "error");
-    if (!DATASET_EXT.includes(extOf(file.name))) return toast("Sadece CSV veya Excel (.xlsx, .xls) yükleyebilirsin.", "error");
+    if (!DATASET_EXT.includes(extOf(file.name))) return toast("Sadece CSV veya Excel (.xlsx) yükleyebilirsin.", "error");
     try {
       const res = await api.uploadDataset(file);
-      toast(res.imported + " kayıt aktarıldı.");
+      toast(res.added + " kayıt eklendi, " + res.updated + " kayıt güncellendi.");
+      // Hatalı satırlar atlanır; hangi satırın neden alınmadığı gösterilir (ilk 5).
+      if (res.errorCount) {
+        const list = res.errors.slice(0, 5).map(e => "Satır " + e.rowNumber + ": " + e.reason).join(" ");
+        toast(res.errorCount + " satır alınmadı. " + list + (res.errorCount > 5 ? " ..." : ""), "error");
+      }
       loadDataset();
     } catch (err) { toast(err.message, "error"); }
   });

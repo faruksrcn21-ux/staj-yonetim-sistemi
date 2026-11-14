@@ -16,7 +16,7 @@ const ROLE_ADMIN = "ROLE_ADMIN";
 const ROLE_HOME = { [ROLE_STUDENT]: "student.html", [ROLE_ADMIN]: "admin.html" };
 
 const ALLOWED_EXT = ["doc", "docx", "pdf", "jpeg", "jpg", "png"]; // evrak
-const DATASET_EXT = ["csv", "xlsx", "xls"];                       // admin veri seti
+const DATASET_EXT = ["csv", "xlsx"];                              // admin veri seti (backend: CSV ve Excel .xlsx)
 
 // Belge akışı: Yüklendi > İnceleniyor > Hatalı/Eksik > Onaylandı > Tamamlandı
 const STATUSES = ["uploaded", "reviewing", "faulty", "approved", "completed"];
@@ -153,6 +153,17 @@ function fromApiDoc(d) {
   };
 }
 
+// Backend'in veri seti kaydı (DatasetRecordResponse) -> arayüzdeki sütun anahtarları.
+// Kimlik no backend'den maskeli gelir (ör. 123******01).
+function fromApiDataset(r) {
+  return {
+    adSoyad: r.fullName, tcNo: r.maskedTcNo, uyruk: r.nationality, ogrenciNo: r.studentNo,
+    dogumTarihi: r.birthDate, adres: r.address, bolum: r.department, teslimYili: r.submissionYear,
+    eskiStajGun: r.previousInternshipDays, email: r.email, telefon: r.phone, saglikYardimi: r.healthInsuranceStatus
+  };
+}
+const maskTc = v => { const s = String(v || ""); return s.length <= 5 ? "*".repeat(s.length) : s.slice(0, 3) + "*".repeat(s.length - 5) + s.slice(-2); };
+
 const api = {
   // POST /auth/login {identifier, password} -> {token, expiresAt, user:{id, username, email, role, dashboardView}}
   // Hoca: "Kullanıcı adı / e-posta + şifre" -> identifier kullanıcı adı veya e-posta olabilir.
@@ -203,14 +214,17 @@ const api = {
     return MockDB.load().documents.filter(d => d.userId === Session.user().id);
   },
 
-  // POST /documents (multipart: file, data(JSON), replaceId?) -> DocumentResponse
-  // NOT: Yükleme endpoint'i 2. geliştiricide (4.1); alan adları onunla netleşecek.
+  // Yeni evrak:   POST /documents/upload          (öğrenci)
+  // Düzeltme:     POST /documents/:id/reupload    (öğrenci: kendi ve Tamamlandı olmayan; admin: hepsi)
+  // multipart: file, manualFormData (JSON metin) -> { document: DocumentResponse, parse: {isReadable, reason, ...} }
+  // Belge tekrar "Yüklendi" olur. Format/içerik uymazsa 400 + mesaj.
   async uploadDocument({ data, file, replaceId }) {
     if (!CONFIG.USE_MOCK) {
       const fd = new FormData();
-      fd.append("file", file); fd.append("data", JSON.stringify(data));
-      if (replaceId) fd.append("replaceId", replaceId);
-      return fromApiDoc(await http("/documents", { method: "POST", body: fd, isForm: true }));
+      fd.append("file", file); fd.append("manualFormData", JSON.stringify(data));
+      const path = replaceId ? "/documents/" + replaceId + "/reupload" : "/documents/upload";
+      const res = await http(path, { method: "POST", body: fd, isForm: true });
+      return { ...fromApiDoc(res.document), parse: res.parse };
     }
     await wait();
     if (!ALLOWED_EXT.includes(extOf(file.name))) throw new Error("Desteklenmeyen dosya formatı.");
@@ -271,28 +285,34 @@ const api = {
     return doc;
   },
 
-  // POST /admin/dataset (multipart: file) -> {imported}
+  // POST /admin/dataset/import (multipart: file .csv/.xlsx)
+  //   -> { added, updated, errorCount, errors: [{ rowNumber, reason }] }
+  // Kimlik no'ya göre upsert: kayıt varsa güncellenir, yoksa eklenir; hatalı satırlar atlanır.
   async uploadDataset(file) {
-    if (!CONFIG.USE_MOCK) { const fd = new FormData(); fd.append("file", file); return http("/admin/dataset", { method: "POST", body: fd, isForm: true }); }
+    if (!CONFIG.USE_MOCK) { const fd = new FormData(); fd.append("file", file); return http("/admin/dataset/import", { method: "POST", body: fd, isForm: true }); }
     await wait();
     if (extOf(file.name) !== "csv") throw new Error("Mock modda sadece CSV okunur. Excel'i backend okuyacak.");
     const lines = (await file.text()).split(/\r?\n/).filter(l => l.trim());
     if (lines.length < 2) throw new Error("Dosyada veri satırı yok.");
     const delim = lines[0].includes(";") ? ";" : ",";
-    const rows = lines.slice(1).map(l => {
+    const db = MockDB.load(), result = { added: 0, updated: 0, errorCount: 0, errors: [] };
+    lines.slice(1).forEach((l, i) => {
       const c = l.split(delim).map(x => x.trim()), o = {};
-      DATASET_KEYS.forEach((k, i) => { o[k] = c[i] || ""; });
-      return o;
+      DATASET_KEYS.forEach((k, j) => { o[k] = c[j] || ""; });
+      if (!o.tcNo) { result.errors.push({ rowNumber: i + 2, reason: "Kimlik no boş olamaz." }); return; }
+      const idx = db.dataset.findIndex(r => r.tcNo === o.tcNo);
+      if (idx >= 0) { db.dataset[idx] = o; result.updated++; } else { db.dataset.push(o); result.added++; }
     });
-    const db = MockDB.load(); db.dataset = rows; MockDB.save(db);
-    return { imported: rows.length };
+    result.errorCount = result.errors.length;
+    MockDB.save(db);
+    return result;
   },
 
-  // GET /admin/dataset -> [row]
+  // GET /admin/dataset -> [DatasetRecordResponse] (kimlik no maskeli)
   async getDataset() {
-    if (!CONFIG.USE_MOCK) return http("/admin/dataset");
+    if (!CONFIG.USE_MOCK) return (await http("/admin/dataset")).map(fromApiDataset);
     await wait();
-    return MockDB.load().dataset;
+    return MockDB.load().dataset.map(r => ({ ...r, tcNo: maskTc(r.tcNo) }));
   }
 };
 

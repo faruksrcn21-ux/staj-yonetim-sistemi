@@ -76,7 +76,12 @@
     try {
       const doc = await api.uploadDocument({ data, file, replaceId });
       dlg.close();
-      toast(doc.comparison && doc.comparison.ready ? "Evrak yüklendi, teslime hazır." : "Evrak yüklendi, uyuşmayan alanlar var.");
+      // Karşılaştırma henüz yapılmadıysa (statü Yüklendi) sadece yüklendi denir.
+      let text = !doc.comparison ? "Evrak yüklendi."
+        : doc.comparison.ready ? "Evrak yüklendi, teslime hazır." : "Evrak yüklendi, uyuşmayan alanlar var.";
+      // Belgeden metin okunamadıysa (görsel, .doc, taranmış PDF) sebebi gösterilir.
+      if (doc.parse && !doc.parse.isReadable && doc.parse.reason) text += " Not: " + doc.parse.reason;
+      toast(text);
       load();
     } catch (err) {
       showMessage(err.message);
