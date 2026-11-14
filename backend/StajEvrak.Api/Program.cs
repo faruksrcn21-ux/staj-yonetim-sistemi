@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using StajEvrak.Api.Data;
 using StajEvrak.Api.Dtos;
 using StajEvrak.Api.Services;
+using StajEvrak.Api.Extensions;
 
 // Gizli ayarları (JWT anahtarı, admin şifresi) .env dosyasından ortam değişkenlerine yükle.
 // NoClobber: bilgisayarda zaten tanımlı bir ortam değişkeni varsa .env onu ezmez.
@@ -31,6 +32,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<DocumentService>();
 builder.Services.AddScoped<StudentDatasetMatcher>();
+builder.Services.AddDatasetModule();
 
 // ---- JWT ayarları ----
 var jwtSection = builder.Configuration.GetSection(JwtOptions.SectionName);
