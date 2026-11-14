@@ -34,6 +34,32 @@ public class DocumentsController : ControllerBase
         return DocumentResults.ToActionResult(this, result);
     }
 
+    // Yüklenen dosyanın kendisi (admin evrakı inceleyebilsin diye).
+    [Authorize(Roles = Roles.Student + "," + Roles.Admin)]
+    [HttpGet("{id:int}/file")]
+    public async Task<IActionResult> GetFile(int id)
+    {
+        var result = await _documents.CheckAccessAsync(id, CurrentUserId, modify: false);
+        if (result.Status != DocumentOperationStatus.Success)
+            return DocumentResults.ToActionResult(this, result);
+
+        var document = result.Document!;
+        if (!System.IO.File.Exists(document.FilePath))
+            return NotFound(new ErrorResponse("Dosya sunucuda bulunamadı."));
+
+        return PhysicalFile(document.FilePath, ContentTypeOf(document.FileExtension), document.FileName);
+    }
+
+    private static string ContentTypeOf(string extension) => extension switch
+    {
+        ".pdf" => "application/pdf",
+        ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".doc" => "application/msword",
+        ".jpeg" or ".jpg" => "image/jpeg",
+        ".png" => "image/png",
+        _ => "application/octet-stream",
+    };
+
     [Authorize(Roles = Roles.Student + "," + Roles.Admin)]
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)

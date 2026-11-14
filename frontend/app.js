@@ -2,7 +2,7 @@
 
 /* ---------- 1) CONFIG + sabitler ---------- */
 const CONFIG = {
-  USE_MOCK: true, // true: sahte veri, false: gerçek backend
+  USE_MOCK: false, // true: sahte veri (backend olmadan), false: gerçek backend
   API_BASE: "http://localhost:5062/api",  // backend: backend/StajEvrak.Api -> "dotnet run"
   MOCK_DELAY: 300
 };
@@ -85,7 +85,7 @@ function mockCompare(entered, extracted) {
   if (!extracted) return { ready: false, note: "Test veri setinde bu öğrenciye ait kayıt yok.", mismatches: [] };
   const mismatches = DATASET_KEYS
     .filter(k => norm(entered[k]) !== norm(extracted[k]))
-    .map(k => ({ field: k, entered: entered[k], found: extracted[k] }));
+    .map(k => ({ field: k, entered: entered[k], found: extracted[k], source: "veri seti" }));
   return { ready: mismatches.length === 0, note: "", mismatches };
 }
 
@@ -233,6 +233,29 @@ const api = {
     return doc;
   },
 
+  // GET /documents/:id/file -> yüklenen dosyanın kendisi; yeni sekmede açılır
+  async openDocumentFile(id, fileName) {
+    if (CONFIG.USE_MOCK) throw new Error("Sahte veri modunda dosya saklanmaz.");
+    const tab = window.open("", "_blank"); // tıklama anında açılır, yoksa tarayıcı engeller
+    try {
+      const res = await fetch(CONFIG.API_BASE + "/documents/" + id + "/file", { headers: { Authorization: "Bearer " + Session.token() } });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 403 && data.redirectTo) { Session.clear(); window.location.href = "index.html?reason=forbidden"; }
+        throw new Error(errorText(data, res.status));
+      }
+      const url = URL.createObjectURL(await res.blob());
+      if (tab) { tab.location.href = url; return; }
+      // Tarayıcı yeni sekmeyi engellediyse dosya indirilir.
+      const a = document.createElement("a");
+      a.href = url; a.download = fileName || "belge";
+      document.body.appendChild(a); a.click(); a.remove();
+    } catch (err) {
+      if (tab) tab.close();
+      throw err;
+    }
+  },
+
   // DELETE /documents/:id  (öğrenci: Tamamlandı ise 403; admin: her zaman)
   async deleteDocument(id) {
     if (!CONFIG.USE_MOCK) return http("/documents/" + id, { method: "DELETE" });
@@ -324,13 +347,16 @@ function toast(text, type) {
 // Karşılaştırma sonucu: teslime hazır mı, değilse hangi alanlar uyuşmuyor
 function cmpHtml(c) {
   if (!c) return "";
+  const note = c.note ? '<p class="note">' + esc(c.note) + "</p>" : "";
   if (c.ready) return '<p class="ready">' + (c.byAdmin
     ? "Teslime hazır: belge admin tarafından onaylandı."
-    : "Teslime hazır: belgedeki bilgiler girdiklerinle uyuşuyor.") + "</p>";
-  let html = '<p class="not-ready">Teslime hazır değil.' + (c.note ? " " + esc(c.note) : "") + "</p>";
+    : "Teslime hazır: girilen bilgiler belgeyle ve veri setiyle uyuşuyor.") + "</p>" + note;
+  let html = '<p class="not-ready">Teslime hazır değil.</p>' + note;
   if (c.mismatches && c.mismatches.length) {
-    html += '<div class="table-wrap"><table class="cmp"><thead><tr><th>Alan</th><th>Girilen</th><th>Belgeden okunan</th></tr></thead><tbody>' +
-      c.mismatches.map(m => "<tr><td>" + esc(fieldLabel(m.field)) + "</td><td>" + esc(m.entered) + "</td><td>" + esc(m.found) + "</td></tr>").join("") +
+    // Kaynak: uyuşmazlığın belgeden okunan bilgiyle mi, test veri setiyle mi olduğu
+    html += '<div class="table-wrap"><table class="cmp"><thead><tr><th>Alan</th><th>Girilen</th><th>Bulunan</th><th>Kaynak</th></tr></thead><tbody>' +
+      c.mismatches.map(m => "<tr><td>" + esc(m.label || fieldLabel(m.field)) + "</td><td>" + esc(m.entered) + "</td><td>" +
+        esc(m.found) + "</td><td>" + esc(m.source === "belge" ? "Belge" : "Veri seti") + "</td></tr>").join("") +
       "</tbody></table></div>";
   }
   return html;

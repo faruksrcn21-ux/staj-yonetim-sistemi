@@ -125,9 +125,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .role input:checked + span { border-color: var(--brand); background: #e6f2ef; color: var(--brand-dark); font-weight: 600; }
 .role input:focus-visible + span { outline: 3px solid #5fb3a1; outline-offset: 2px; }
 
-.demo { margin-top: 1.25rem; font-size: 0.9rem; color: var(--ink-soft); }
-.demo summary { cursor: pointer; }
-.demo ul { margin: 0.5rem 0 0; padding-left: 1.1rem; }
 
 [hidden] { display: none !important; }
 
