@@ -2,11 +2,9 @@ using StajEvrak.Api.Parsing;
 
 namespace StajEvrak.Api.Comparison;
 
-// Okunan belgeden Ek-16'nın öğrenci alanlarını çıkarır.
-// Ek-16'da öğrenci bilgileri dört sütunlu bir tablodadır: etiket | değer | etiket | değer.
-// Her değer hücresi, aynı satırda solundaki en yakın etiket sütununa aittir.
-// Staj yeri ve işveren bölümlerinde de "Telefon No" gibi etiketler olduğu için
-// sadece "ÖĞRENCİNİN" ile "STAJ YAPILAN YERİN" başlıkları arasına bakılır.
+// Ek-16'da öğrenci bilgileri dört sütunlu tablodadır (etiket | değer | etiket | değer);
+// her değer solundaki en yakın etikete aittir. Staj yeri bölümünde de "Telefon No" gibi
+// etiketler olduğu için sadece öğrenci bölümüne bakılır.
 public class Ek16FieldExtractor
 {
     // Bu kadar yakın X değerleri aynı sütun sayılır.
@@ -81,8 +79,7 @@ public class Ek16FieldExtractor
         return found;
     }
 
-    // Dar sütunda uzun etiket alt alta birkaç satıra bölünebilir ("SAĞLIK YARDIM" / "STATÜSÜ (*)").
-    // Aynı sütundaki sonraki 1-2 parçayla birleşince daha uzun bir etiket çıkıyorsa onu kullanır.
+    // Dar sütunda alt satırlara bölünmüş etiketi birleştirir ("SAĞLIK YARDIM" / "STATÜSÜ (*)").
     private static (Label Label, int End)? MatchWrappedLabel(TextCell first, List<TextCell> cells, HashSet<TextCell> labelParts)
     {
         const double maxLineGap = 14;
@@ -157,7 +154,6 @@ public class Ek16FieldExtractor
             found[field.Key] = value;
     }
 
-    // Hücre bir etiketle başlıyor mu? Başlıyorsa etiketin ham metinde bittiği konum.
     private static (Label Label, int End)? MatchLabelAt(string text)
     {
         foreach (var label in Labels)

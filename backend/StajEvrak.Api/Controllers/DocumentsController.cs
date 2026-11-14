@@ -34,7 +34,7 @@ public class DocumentsController : ControllerBase
         return DocumentResults.ToActionResult(this, result);
     }
 
-    // Yüklenen dosyanın kendisi (admin evrakı inceleyebilsin diye).
+    // Yüklenen dosyanın kendisi
     [Authorize(Roles = Roles.Student + "," + Roles.Admin)]
     [HttpGet("{id:int}/file")]
     public async Task<IActionResult> GetFile(int id)

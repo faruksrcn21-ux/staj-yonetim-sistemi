@@ -9,9 +9,8 @@ public record FieldMismatch(string Field, string Label, string? Entered, string?
 
 public record ComparisonReport(string Note, IReadOnlyList<FieldMismatch> Mismatches);
 
-// Öğrencinin forma girdiği bilgileri iki kaynakla karşılaştırır:
-//   1) belgeden okunan bilgiler, 2) test veri setindeki kaydı (e-postayla bulunur).
-// Uyuşmazlık yoksa belge teslime hazırdır ve admin onayını bekler; varsa Hatalı/Eksik olur.
+// Forma girilen bilgiler belgeden okunanla ve veri setindeki kayıtla karşılaştırılır.
+// Uyuşmazlık yoksa belge admin onayını bekler, varsa Hatalı/Eksik olur.
 public class DocumentComparisonService
 {
     public const string SourceDocument = "belge";
@@ -28,7 +27,6 @@ public class DocumentComparisonService
         _matcher = matcher;
     }
 
-    // Belge Yüklendi → İnceleniyor olur, sonuç kaydedilir (gerekirse Hatalı/Eksik).
     public async Task CompareAndRecordAsync(Document document, ParsedDocument parsed)
     {
         var entered = ReadManualData(document.ManualFormData);

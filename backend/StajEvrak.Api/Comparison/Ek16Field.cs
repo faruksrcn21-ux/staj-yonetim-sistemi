@@ -11,7 +11,6 @@ public abstract class Ek16Field
     public string Key { get; }
     public string Label { get; }
 
-    // Belgede bu alanı gösteren etiket yazılışları (Türkçe karakterler sadeleştirilmiş hâlde).
     public IReadOnlyList<string> LabelVariants { get; }
 
     protected Ek16Field(string key, string label, params string[] labelVariants)
@@ -30,7 +29,6 @@ public abstract class Ek16Field
     public virtual string Clean(string raw) =>
         raw.Replace("☐", "").Replace("\n", " ").Trim(' ', '\t', ':', '-', '–', ',', ';');
 
-    // Raporda gösterilecek hâl.
     public virtual string Display(string? value) => value ?? string.Empty;
 
     // Türkçe karakterleri sadeleştirir, küçük harfe çevirir, harf/rakam dışını boşluk yapar.
@@ -127,7 +125,6 @@ public class HealthStatusField : Ek16Field
         "Herhangi bir sosyal güvencem olmadığından sağlık yardımı alamıyorum",
     };
 
-    // Seçeneği ayırt eden kelimeler (sadeleştirilmiş).
     private static readonly string[] Keywords =
         { "genel saglik", "anne baba", "sosyal sigortalar", "bag kur", "emekli sandigi", "sosyal guvencem" };
 
