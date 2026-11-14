@@ -6,9 +6,7 @@ using StajEvrak.Api.Storage;
 
 namespace StajEvrak.Api.Services;
 
-
-/// Yükleme sonucu. Üç durumdan biri: belge oluştu/güncellendi, dosya geçersiz, ya da yetki yok.
-
+// Sonuç üç durumdan biri: başarılı, dosya geçersiz veya yetki yok.
 public sealed record UploadResult(
     Document? Document, ParseSummary? Parse, string? InvalidFileMessage, DocumentOperationResult? AccessDenied)
 {
@@ -17,10 +15,7 @@ public sealed record UploadResult(
     public static UploadResult Denied(DocumentOperationResult access) => new(null, null, null, access);
 }
 
-
-/// Evrak yükleme ve yeniden yükleme.
-/// Akış: format/uzantı kontrolü → dosyayı kaydet → Document kaydı oluştur → belgeden metin oku.
-
+// Akış: format kontrolü → dosyayı kaydet → kaydı oluştur → belgeyi oku.
 public class DocumentUploadService
 {
     private readonly UploadedFileValidator _validator;
@@ -58,14 +53,14 @@ public class DocumentUploadService
         }
         catch
         {
-            _store.Delete(path); // kayıt oluşmadıysa yetim dosya kalmasın
+            _store.Delete(path); // kayıt oluşmadıysa dosya da kalmasın
             throw;
         }
 
         return UploadResult.Success(document, Summarize(path, validation.Extension));
     }
 
-    /// Düzeltilip yeniden yükleme: belge tekrar "Yüklendi" olur, eski dosya silinir.
+    // Belge tekrar Yüklendi olur, eski dosya silinir.
     public async Task<UploadResult> ReuploadAsync(
         int documentId, int userId, string fileName, long length, Stream content, string? manualFormData)
     {

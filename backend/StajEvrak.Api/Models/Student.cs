@@ -1,12 +1,8 @@
 namespace StajEvrak.Api.Models;
 
-/// <summary>
-/// Öğrenci kullanıcı (Kalıtım: BaseUser'dan türer).
-/// Öğrenciler hesabını kendisi oluşturur (hoca cevabı #4).
-/// </summary>
+// Kalıtım: BaseUser'dan türer.
 public class Student : BaseUser
 {
-    // EF Core için.
     private Student() { }
 
     public Student(string username, string email, string passwordHash)
@@ -16,10 +12,7 @@ public class Student : BaseUser
 
     public override string GetDashboardView() => "/student";
 
-    /// <summary>
-    /// Öğrenci sadece kendi belgesine erişir. "Tamamlandı" statüsündeki belgeyi
-    /// hiçbir şekilde değiştiremez/silemez (hoca S3), sadece görüntüleyebilir.
-    /// </summary>
+    // Öğrenci sadece kendi belgesine erişir, Tamamlandı belgeyi değiştiremez/silemez.
     public override DocumentAccess CheckDocumentAccess(Document document, bool modify)
     {
         if (document.UserId != Id)

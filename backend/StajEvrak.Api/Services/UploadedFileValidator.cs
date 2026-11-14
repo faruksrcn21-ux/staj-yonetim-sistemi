@@ -6,18 +6,14 @@ public sealed record FileValidationResult(bool IsValid, string Extension, string
     public static FileValidationResult Fail(string error) => new(false, string.Empty, error);
 }
 
-
-/// Evrak yükleme format/uzantı kontrolü (hoca 4.4 ve S2). Kabul edilenler: Word (.doc/.docx),
-/// PDF, JPEG, PNG. Diğerleri reddedilir ve kullanıcıya uyarı mesajı verilir.
-/// Kapsülleme: Kabul listesi ve dosya imzaları sınıfın içinde private durur.
-
+// Uzantıya ek olarak dosyanın ilk baytlarına bakılır; uzantısı değiştirilmiş dosya reddedilir.
 public class UploadedFileValidator
 {
-    public const long MaxFileSizeBytes = 10 * 1024 * 1024; // 10 MB
+    public const long MaxFileSizeBytes = 10 * 1024 * 1024;
 
     private const string AcceptedFormats = ".doc, .docx, .pdf, .jpeg, .jpg, .png";
 
-    // Uzantı → dosyanın ilk baytları (dosya imzası)
+    // Uzantı → dosya imzası (ilk baytlar)
     private static readonly Dictionary<string, byte[]> Signatures = new()
     {
         [".pdf"] = new byte[] { 0x25, 0x50, 0x44, 0x46 },                               // %PDF

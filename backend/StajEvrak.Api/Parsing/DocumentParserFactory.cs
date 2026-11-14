@@ -1,11 +1,10 @@
 namespace StajEvrak.Api.Parsing;
 
-/// Uzantıya göre doğru parser'ı seçer (Çok biçimlilik burada devreye girer).
+// Uzantıya göre doğru parser'ı seçer.
 public class DocumentParserFactory
 {
     private readonly IEnumerable<IDocumentParser> _parsers;
 
-    // DI, kayıtlı tüm parser'ları buraya verir.
     public DocumentParserFactory(IEnumerable<IDocumentParser> parsers) => _parsers = parsers;
 
     public IDocumentParser Select(string extension) =>

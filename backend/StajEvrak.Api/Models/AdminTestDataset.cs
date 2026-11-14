@@ -1,13 +1,7 @@
 namespace StajEvrak.Api.Models;
 
-// Admin'in yüklediği test veri setindeki bir öğrenci kaydı (admin_test_dataset tablosu).
-// Sütunlar hocanın dokümanındaki 12 sütunla birebir aynıdır.
-//
-// Kapsülleme: Setter'lar private. Kayıt sadece constructor ile oluşturulur ve
-// UpdateFrom ile güncellenir; doğrulama kuralları bu iki yolun ortak noktasında
-// (Apply) tek yerde durur. Kimlik no (TcNo) kaydı bulmak için kullanılan anahtar
-// olduğundan güncellemede değişmez.
-//
+// Kapsülleme: kayıt sadece constructor ve UpdateFrom ile değişir, doğrulama Apply'da tek yerde.
+// TcNo kaydı bulmak için kullanılan anahtar olduğundan güncellemede değişmez.
 public class AdminTestDataset
 {
     public int Id { get; private set; }
@@ -24,7 +18,6 @@ public class AdminTestDataset
     public string Phone { get; private set; } = string.Empty;
     public string HealthInsuranceStatus { get; private set; } = string.Empty;
 
-    // EF Core veritabanından okurken bu boş constructor'ı kullanır.
     private AdminTestDataset() { }
 
     public AdminTestDataset(
@@ -37,7 +30,6 @@ public class AdminTestDataset
               submissionYear, previousInternshipDays, email, phone, healthInsuranceStatus);
     }
 
-    //Mevcut kaydı yeni bilgilerle günceller (upsert'in "güncelle" kolu).
     public void UpdateFrom(
         string? fullName, string? nationality, string? studentNo,
         DateOnly birthDate, string? address, string? department, string? submissionYear,
@@ -47,10 +39,9 @@ public class AdminTestDataset
               submissionYear, previousInternshipDays, email, phone, healthInsuranceStatus);
     }
 
-    //Kimlik no zorunludur; kayıt aranmadan önce de bu kural uygulanır.
     public static string NormalizeTcNo(string? tcNo) => Required(tcNo, "Kimlik no");
 
-    // Önce HEPSİ doğrulanır, sonra atanır: hatalı satır kaydı yarım güncellemez.
+    // Önce hepsi doğrulanır, sonra atanır; hatalı satır kaydı yarım güncellemez.
     private void Apply(
         string? fullName, string? nationality, string? studentNo,
         DateOnly birthDate, string? address, string? department, string? submissionYear,

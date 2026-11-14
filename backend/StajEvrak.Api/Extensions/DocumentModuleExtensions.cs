@@ -5,7 +5,6 @@ using StajEvrak.Api.Storage;
 
 namespace StajEvrak.Api.Extensions;
 
-///Evrak yükleme/parser modülünün servis kayıtları. Program.cs'e tek satır eklenir.
 public static class DocumentModuleExtensions
 {
     public static IServiceCollection AddDocumentUploadModule(this IServiceCollection services)

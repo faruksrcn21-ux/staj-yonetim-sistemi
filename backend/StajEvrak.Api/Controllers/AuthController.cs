@@ -8,10 +8,6 @@ using StajEvrak.Api.Services;
 
 namespace StajEvrak.Api.Controllers;
 
-/// <summary>
-/// Kayıt ve giriş endpoint'leri. İş mantığı AuthService'tedir;
-/// controller sadece sonucu uygun HTTP koduna çevirir.
-/// </summary>
 [ApiController]
 [Route("api/auth")]
 public class AuthController : ControllerBase
@@ -25,7 +21,6 @@ public class AuthController : ControllerBase
         _tokens = tokens;
     }
 
-    /// <summary>Öğrenci kaydı. 201 Created / 409 Conflict / 400 Bad Request.</summary>
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
@@ -39,10 +34,6 @@ public class AuthController : ControllerBase
         };
     }
 
-    /// <summary>
-    /// Giriş. 200 OK / 401 Unauthorized (yanlış bilgi) /
-    /// 423 Locked (hesap kilitli) / 429 Too Many Requests (IP kilitli).
-    /// </summary>
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)
     {
@@ -53,7 +44,7 @@ public class AuthController : ControllerBase
         {
             LoginStatus.Success => Ok(CreateLoginResponse(result.User!)),
 
-            // Güvenlik: kullanıcı adının mı şifrenin mi yanlış olduğu söylenmez.
+            // Kullanıcı adının mı şifrenin mi yanlış olduğu söylenmez.
             LoginStatus.InvalidCredentials => Unauthorized(new ErrorResponse(
                 "Kullanıcı adı/e-posta veya şifre hatalı.",
                 RemainingAttempts: result.RemainingAttempts)),
@@ -70,10 +61,7 @@ public class AuthController : ControllerBase
         };
     }
 
-    /// <summary>
-    /// Çıkış. Kullanılan token iptal edilir; aynı token ile yapılan sonraki
-    /// istekler 403 alır. Frontend de kendi sakladığı token'ı silmelidir.
-    /// </summary>
+    // Token iptal edilir; aynı token ile gelen sonraki istekler 403 alır.
     [Authorize]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
@@ -88,10 +76,6 @@ public class AuthController : ControllerBase
         return Ok(new { Message = "Çıkış yapıldı.", RedirectTo = "/login" });
     }
 
-    /// <summary>
-    /// Giriş yapmış kullanıcının bilgisi. Token yoksa / geçersizse 403 döner.
-    /// Frontend sayfa yenilendiğinde token hâlâ geçerli mi diye buna bakabilir.
-    /// </summary>
     [Authorize]
     [HttpGet("me")]
     public IActionResult Me() => Ok(new

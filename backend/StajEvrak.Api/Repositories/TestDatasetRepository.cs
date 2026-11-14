@@ -13,14 +13,13 @@ public class TestDatasetRepository : ITestDatasetRepository
     public Task<AdminTestDataset?> FindByTcNoAsync(string tcNo) =>
         _db.AdminTestDataset.FirstOrDefaultAsync(d => d.TcNo == tcNo);
 
-    // Her kayıt kendi SaveChanges'iyle kaydedilir (satır satır): bir satırın hatası diğerlerini geri almaz.
+    // Satır satır kaydedilir; bir satırın hatası diğerlerini geri almaz.
     public async Task AddAsync(AdminTestDataset record)
     {
         _db.AdminTestDataset.Add(record);
         await SaveOrDetachAsync(record);
     }
 
-    // Kayıt zaten takip ediliyor (FindByTcNoAsync ile okundu); sadece değişiklikleri kaydet.
     public Task UpdateAsync(AdminTestDataset record) => SaveOrDetachAsync(record);
 
     public async Task<IReadOnlyList<AdminTestDataset>> GetAllAsync() =>
@@ -34,7 +33,7 @@ public class TestDatasetRepository : ITestDatasetRepository
         }
         catch (DbUpdateException ex)
         {
-            // Başarısız kayıt takipte kalırsa sonraki satırların kaydını da bozar.
+            // Hatalı kayıt takipten çıkarılır, yoksa sonraki satırları da bozar.
             _db.Entry(record).State = EntityState.Detached;
             throw new DatasetStorageException("Veritabanına kaydedilemedi.", ex);
         }

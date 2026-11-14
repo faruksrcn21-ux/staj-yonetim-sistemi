@@ -1,8 +1,8 @@
 namespace StajEvrak.Api.Parsing;
 
-///"Bir belge dosyasından içerik oku" sözleşmesi. Çağıran, dosyanın PDF mi Word mü olduğunu bilmez.
+// Soyutlama: çağıran, dosyanın PDF mi Word mü olduğunu bilmez.
 public interface IDocumentParser
 {
-    bool CanParse(string extension);          // ör. ".pdf"
+    bool CanParse(string extension);
     ParsedDocument Parse(string filePath);
 }

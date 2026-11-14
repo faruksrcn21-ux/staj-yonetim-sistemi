@@ -6,11 +6,6 @@ using StajEvrak.Api.Services;
 
 namespace StajEvrak.Api.Controllers;
 
-
-/// Admin test veri seti yönetimi (sadece ROLE_ADMIN; öğrenci veya girişsiz istek 403 alır).
-///   POST /api/admin/dataset/import   (form-data, alan adı "file": .csv veya .xlsx) → { added, updated, errorCount, errors: [{ rowNumber, reason }] }
-///  GET  /api/admin/dataset → veri tabanındaki kayıtlar (kimlik no maskeli)
-
 [ApiController]
 [Route("api/admin/dataset")]
 [Authorize(Roles = Roles.Admin)]
@@ -35,7 +30,6 @@ public class AdminDatasetController : ControllerBase
         }
         catch (Exception ex) when (ex is NotSupportedException or FormatException)
         {
-            // Desteklenmeyen uzantı veya eksik sütun: kullanıcıya net uyarı.
             return BadRequest(new ErrorResponse(ex.Message));
         }
     }

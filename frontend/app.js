@@ -1,12 +1,8 @@
-/* =====================================================
-   Staj Evrak Doğrulama ve Yönetim Sistemi - ortak JS
-   1) CONFIG + sabitler   2) MockDB   3) api   4) yardımcılar
-   5) Session             6) Giriş / Kayıt sayfası (index.html)
-   ===================================================== */
+   /* Ortak kod: sabitler, sahte veri, API çağrıları, yardımcılar, oturum, giriş sayfası */
 
 /* ---------- 1) CONFIG + sabitler ---------- */
 const CONFIG = {
-  USE_MOCK: true,                         // backend hazır olunca false yap
+  USE_MOCK: true, // true: sahte veri, false: gerçek backend
   API_BASE: "http://localhost:5062/api",  // backend: backend/StajEvrak.Api -> "dotnet run"
   MOCK_DELAY: 300
 };
@@ -15,8 +11,8 @@ const ROLE_STUDENT = "ROLE_STUDENT";
 const ROLE_ADMIN = "ROLE_ADMIN";
 const ROLE_HOME = { [ROLE_STUDENT]: "student.html", [ROLE_ADMIN]: "admin.html" };
 
-const ALLOWED_EXT = ["doc", "docx", "pdf", "jpeg", "jpg", "png"]; // evrak
-const DATASET_EXT = ["csv", "xlsx"];                              // admin veri seti (backend: CSV ve Excel .xlsx)
+const ALLOWED_EXT = ["doc", "docx", "pdf", "jpeg", "jpg", "png"];
+const DATASET_EXT = ["csv", "xlsx"];
 
 // Belge akışı: Yüklendi > İnceleniyor > Hatalı/Eksik > Onaylandı > Tamamlandı
 const STATUSES = ["uploaded", "reviewing", "faulty", "approved", "completed"];
@@ -25,15 +21,13 @@ const STATUS_LABEL = {
   approved: "Onaylandı", completed: "Tamamlandı"
 };
 
-// Backend'deki statü kodları (documents.status) -> arayüzdeki anahtarlar
+// Backend statü kodu -> arayüzdeki anahtar
 const STATUS_FROM_API = {
   YUKLENDI: "uploaded", INCELENIYOR: "reviewing", HATALI_EKSIK: "faulty",
   ONAYLANDI: "approved", TAMAMLANDI: "completed"
 };
 
 // Admin'in yapabileceği statü geçişleri (backend kuralıyla aynı).
-// Hoca: "Onaylanan belgeler Tamamlandı statüsüne geçer" -> onay doğrudan Tamamlandı yapar.
-// Hatalı / Eksik belgeyi öğrenci düzeltip yeniden yükler; Tamamlandı belgeyi admin sadece silebilir.
 const NEXT_STATUSES = {
   uploaded: ["reviewing"],
   reviewing: ["completed", "faulty"],
@@ -57,7 +51,6 @@ const fieldLabel = key => (FIELDS.find(f => f[0] === key) || [key, key])[1];
 /* ---------- 2) MockDB (localStorage) ---------- */
 const MOCK_SEED = {
   users: [
-    // Backend'deki kullanıcı yapısıyla aynı: { id, username, email, role }
     { id: 1, role: ROLE_STUDENT, username: "ogrenci", email: "ogrenci@kocaeli.edu.tr", password: "123456" },
     { id: 2, role: ROLE_ADMIN, username: "admin", email: "admin@kocaeli.edu.tr", password: "123456" }
   ],
@@ -74,7 +67,7 @@ const MOCK_SEED = {
 };
 
 const MockDB = {
-  KEY: "staj_evrak_mock_db_v2", // v2: kullanıcılar backend'e uyarlandı (eski kayıtlar okunmaz)
+  KEY: "staj_evrak_mock_db_v2",
   load() {
     try { const raw = localStorage.getItem(this.KEY); if (raw) return JSON.parse(raw); } catch (e) { /* sıfırla */ }
     return JSON.parse(JSON.stringify(MOCK_SEED));
@@ -87,7 +80,7 @@ const wait = (ms = CONFIG.MOCK_DELAY) => new Promise(r => setTimeout(r, ms));
 const norm = v => String(v == null ? "" : v).trim().toLocaleLowerCase("tr");
 const extOf = name => (name.split(".").pop() || "").toLowerCase();
 
-// SADECE MOCK: gerçekte belgeyi 2. kişinin parser'ı okur, karşılaştırmayı backend yapar.
+// Sadece sahte veri modunda; gerçekte karşılaştırmayı backend yapar.
 function mockCompare(entered, extracted) {
   if (!extracted) return { ready: false, note: "Test veri setinde bu öğrenciye ait kayıt yok.", mismatches: [] };
   const mismatches = DATASET_KEYS
@@ -96,7 +89,7 @@ function mockCompare(entered, extracted) {
   return { ready: mismatches.length === 0, note: "", mismatches };
 }
 
-/* ---------- 3) api: TÜM sunucu çağrıları burada ---------- */
+/* ---------- 3) api: tüm sunucu çağrıları ---------- */
 async function http(path, { method = "GET", body, isForm = false } = {}) {
   const headers = {};
   const token = Session.token();
@@ -105,9 +98,8 @@ async function http(path, { method = "GET", body, isForm = false } = {}) {
   const res = await fetch(CONFIG.API_BASE + path, { method, headers, body: body ? (isForm ? body : JSON.stringify(body)) : undefined });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    // Hoca: "Yetkisiz istekler 403 döner ve login sayfasına yönlendirilir."
-    // Backend oturum geçersizse veya rol yetmiyorsa 403 + redirectTo:"/login" döner -> çıkış + login.
-    // redirectTo yoksa (ör. Tamamlandı belgeyi silmeye çalışmak) sadece mesaj gösterilir.
+    // Oturum geçersizse veya rol yetmiyorsa 403 + redirectTo gelir: çıkış yapılıp login'e gidilir.
+    // redirectTo yoksa sadece mesaj gösterilir.
     if (res.status === 403 && data.redirectTo) {
       Session.clear();
       window.location.href = "index.html?reason=forbidden";
@@ -130,10 +122,8 @@ function errorText(data, status) {
   return text;
 }
 
-// Backend'in belge yanıtını (DocumentResponse) arayüzün kullandığı yapıya çevirir.
-// manualFormData / parsedData JSON metni olarak gelir. comparisonReport'un biçimini
-// karşılaştırmayı yazan 2. geliştirici belirleyecek: JSON ({mismatches:[...]}) ise tablo,
-// düz metinse not olarak gösterilir.
+// Backend'in belge yanıtını arayüzün kullandığı yapıya çevirir.
+// comparisonReport JSON ise uyuşmayan alanlar tablo, düz metinse not olarak gösterilir.
 function parseJson(text) { try { return text ? JSON.parse(text) : null; } catch (e) { return null; } }
 function fromApiDoc(d) {
   const data = parseJson(d.manualFormData) || {};
@@ -144,17 +134,18 @@ function fromApiDoc(d) {
     fileName: d.fileName, uploadedAt: d.uploadedAt,
     status: STATUS_FROM_API[d.status] || d.status,
     data,
-    // Henüz karşılaştırılmamış belgede (Yüklendi, rapor yok) sonuç gösterilmez.
-    comparison: d.status === "YUKLENDI" && !d.comparisonReport ? null : {
+    // Rapor yoksa sonuç alanı gösterilmez.
+    comparison: !d.comparisonReport && !d.isReadyForSubmission ? null : {
       ready: d.isReadyForSubmission,
+      // Rapor olmadan hazırsa bunu admin onayı sağlamıştır.
+      byAdmin: d.isReadyForSubmission && !d.comparisonReport,
       note: report ? (report.note || "") : (d.comparisonReport || ""),
       mismatches: report && Array.isArray(report.mismatches) ? report.mismatches : []
     }
   };
 }
 
-// Backend'in veri seti kaydı (DatasetRecordResponse) -> arayüzdeki sütun anahtarları.
-// Kimlik no backend'den maskeli gelir (ör. 123******01).
+// Backend'in veri seti kaydı -> arayüzdeki sütun anahtarları (kimlik no maskeli gelir).
 function fromApiDataset(r) {
   return {
     adSoyad: r.fullName, tcNo: r.maskedTcNo, uyruk: r.nationality, ogrenciNo: r.studentNo,
@@ -166,7 +157,6 @@ const maskTc = v => { const s = String(v || ""); return s.length <= 5 ? "*".repe
 
 const api = {
   // POST /auth/login {identifier, password} -> {token, expiresAt, user:{id, username, email, role, dashboardView}}
-  // Hoca: "Kullanıcı adı / e-posta + şifre" -> identifier kullanıcı adı veya e-posta olabilir.
   // Hatalı şifrede 401 + remainingAttempts, hesap kilitliyse 423 + lockedUntil, IP kilidinde 429.
   async login({ identifier, password }) {
     if (!CONFIG.USE_MOCK) return http("/auth/login", { method: "POST", body: { identifier, password } });
@@ -202,7 +192,7 @@ const api = {
     return safe;
   },
 
-  // POST /auth/logout -> token'ı geçersiz kılar (hoca: "Çıkış işlemi token/session geçersiz kılar")
+  // POST /auth/logout -> token'ı geçersiz kılar
   async logout() {
     if (!CONFIG.USE_MOCK) return http("/auth/logout", { method: "POST" });
   },
@@ -215,7 +205,7 @@ const api = {
   },
 
   // Yeni evrak:   POST /documents/upload          (öğrenci)
-  // Düzeltme:     POST /documents/:id/reupload    (öğrenci: kendi ve Tamamlandı olmayan; admin: hepsi)
+  // Düzeltme:     POST /documents/:id/reupload
   // multipart: file, manualFormData (JSON metin) -> { document: DocumentResponse, parse: {isReadable, reason, ...} }
   // Belge tekrar "Yüklendi" olur. Format/içerik uymazsa 400 + mesaj.
   async uploadDocument({ data, file, replaceId }) {
@@ -234,8 +224,8 @@ const api = {
       if (old && old.status === "completed") throw new Error("Tamamlandı durumundaki belge değiştirilemez.");
       db.documents = db.documents.filter(d => d !== old);
     }
-    // Öğrencinin veri setindeki kaydı e-posta ile bulunur (backend'deki eşleşmeyle aynı).
-    const extracted = db.dataset.find(r => norm(r.email) === norm(u.email)); // belgeden okunan (simülasyon)
+    // Veri setindeki kayıt e-posta ile bulunur.
+    const extracted = db.dataset.find(r => norm(r.email) === norm(u.email));
     const comparison = mockCompare(data, extracted);
     const doc = { id: Date.now(), userId: u.id, studentName: data.adSoyad || u.username, studentNo: data.ogrenciNo || "", fileName: file.name,
       uploadedAt: new Date().toISOString(), status: comparison.ready ? "reviewing" : "faulty", data, comparison };
@@ -281,6 +271,7 @@ const api = {
       if (!reason || reason.trim().length < 3) throw new Error("Sebep en az 3 karakter olmalıdır.");
       doc.comparison = { ready: false, note: reason.trim(), mismatches: [] };
     }
+    if (status === "completed") doc.comparison = { ...(doc.comparison || { note: "", mismatches: [] }), ready: true }; // onay = teslime hazır
     doc.status = status; MockDB.save(db);
     return doc;
   },
@@ -333,7 +324,9 @@ function toast(text, type) {
 // Karşılaştırma sonucu: teslime hazır mı, değilse hangi alanlar uyuşmuyor
 function cmpHtml(c) {
   if (!c) return "";
-  if (c.ready) return '<p class="ready">Teslime hazır: belgedeki bilgiler girdiklerinle uyuşuyor.</p>';
+  if (c.ready) return '<p class="ready">' + (c.byAdmin
+    ? "Teslime hazır: belge admin tarafından onaylandı."
+    : "Teslime hazır: belgedeki bilgiler girdiklerinle uyuşuyor.") + "</p>";
   let html = '<p class="not-ready">Teslime hazır değil.' + (c.note ? " " + esc(c.note) : "") + "</p>";
   if (c.mismatches && c.mismatches.length) {
     html += '<div class="table-wrap"><table class="cmp"><thead><tr><th>Alan</th><th>Girilen</th><th>Belgeden okunan</th></tr></thead><tbody>' +
@@ -350,11 +343,12 @@ const Session = {
   token() { const s = this.get(); return s ? s.token : null; },
   user() { const s = this.get(); return s ? s.user : null; },
   clear() { sessionStorage.removeItem("staj_session"); },
-  // Sayfa başında: Session.require(ROLE_ADMIN). Rol uymazsa login'e (403 gibi) yönlendirir.
+  // Rol uymazsa oturum kapatılıp login'e yönlendirilir.
   require(role) {
     const u = this.user();
     if (!u) { window.location.href = "index.html"; return null; }
-    if (u.role !== role) { window.location.href = "index.html?reason=forbidden"; return null; }
+    // Oturum silinmezse giriş sayfası kullanıcıyı geri gönderir ve 403 mesajı görünmez.
+    if (u.role !== role) { this.clear(); window.location.href = "index.html?reason=forbidden"; return null; }
     return u;
   },
   async logout() {
@@ -384,7 +378,6 @@ const Session = {
   }
 
   // data-only="login" | "register": alan sadece o modda görünür.
-  // Giriş: kullanıcı adı veya e-posta + şifre. Kayıt: kullanıcı adı + e-posta + şifre (sadece öğrenci).
   function refresh() {
     const reg = mode === "register";
     form.querySelectorAll("[data-only]").forEach(el => { el.hidden = el.dataset.only !== mode; });
@@ -407,7 +400,7 @@ const Session = {
       email: form.elements.email.value.trim(),
       password: form.elements.password.value, password2: form.elements.password2.value
     };
-    // Kurallar backend ile aynı (Dtos/AuthDtos.cs)
+    // Kurallar backend ile aynı
     if (mode === "login") {
       if (!v.identifier) return show("Kullanıcı adı veya e-posta gir.", "error");
       if (!v.password) return show("Şifreni gir.", "error");
@@ -426,7 +419,7 @@ const Session = {
       } else {
         await api.register(v);
         mode = "login"; refresh();
-        form.elements.identifier.value = v.username; // kolaylık: yeni kullanıcı adını giriş alanına yaz
+        form.elements.identifier.value = v.username;
         form.elements.password.value = ""; form.elements.password2.value = "";
         show("Kayıt başarılı. Şimdi giriş yapabilirsin.", "success");
       }
