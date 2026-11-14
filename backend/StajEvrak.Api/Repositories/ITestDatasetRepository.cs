@@ -2,13 +2,12 @@ using StajEvrak.Api.Models;
 
 namespace StajEvrak.Api.Repositories;
 
-// Veri tabanı hatasını servise SQLite/EF'e bağımlı olmadan iletir
 public class DatasetStorageException : Exception
 {
     public DatasetStorageException(string message, Exception inner) : base(message, inner) { }
 }
 
-//Soyutlama: Servis veri tabanının SQLite olduğunu bilmez, sadece bu sözleşmeyi bilir.
+// Soyutlama: servis veritabanının ne olduğunu bilmez, sadece bu arayüzü kullanır.
 public interface ITestDatasetRepository
 {
     Task<AdminTestDataset?> FindByTcNoAsync(string tcNo);

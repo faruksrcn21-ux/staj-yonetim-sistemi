@@ -1,6 +1,6 @@
-/* Admin ekranı - sadece admin.html'de çalışır (app.js önce yüklenmeli) */
+/* Admin ekranı (admin.html) */
 (function () {
-  const user = Session.require(ROLE_ADMIN); // rol uymazsa login'e (hoca: yetkisiz -> 403 + login)
+  const user = Session.require(ROLE_ADMIN);
   if (!user) return;
 
   const $ = id => document.getElementById(id);
@@ -52,7 +52,7 @@
       FIELDS.map(([k, label]) => "<dt>" + esc(label) + "</dt><dd>" + esc((d.data || {})[k]) + "</dd>").join("");
     $("dlg-cmp").innerHTML = cmpHtml(d.comparison);
 
-    // Sadece akışa uygun işlemler listelenir (Yüklendi -> İnceleniyor -> Tamamlandı / Hatalı-Eksik)
+    // Sadece akışa uygun işlemler listelenir.
     const next = NEXT_STATUSES[d.status] || [];
     statusSel.innerHTML = '<option value="">Şu an: ' + esc(STATUS_LABEL[d.status] || d.status) + "</option>" +
       next.map(s => '<option value="' + s + '">' + esc(ACTION_LABEL[s]) + "</option>").join("");
@@ -109,7 +109,7 @@
     try {
       const res = await api.uploadDataset(file);
       toast(res.added + " kayıt eklendi, " + res.updated + " kayıt güncellendi.");
-      // Hatalı satırlar atlanır; hangi satırın neden alınmadığı gösterilir (ilk 5).
+      // Atlanan satırlar sebebiyle gösterilir (ilk 5).
       if (res.errorCount) {
         const list = res.errors.slice(0, 5).map(e => "Satır " + e.rowNumber + ": " + e.reason).join(" ");
         toast(res.errorCount + " satır alınmadı. " + list + (res.errorCount > 5 ? " ..." : ""), "error");

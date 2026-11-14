@@ -3,9 +3,7 @@ using StajEvrak.Api.Models;
 
 namespace StajEvrak.Api.Dtos;
 
-/// <summary>
-/// Belge bilgisi (API yanıtı). Sunucudaki dosya yolu (file_path) güvenlik için dışarı verilmez.
-/// </summary>
+// Sunucudaki dosya yolu güvenlik için yanıta konmaz.
 public record DocumentResponse(
     int Id,
     int UserId,
@@ -24,7 +22,6 @@ public record DocumentResponse(
         d.IsReadyForSubmission, d.ComparisonReport, d.ParsedData, d.ManualFormData, d.UploadedAt);
 }
 
-/// <summary>Admin'in belgeyi Hatalı/Eksik işaretlerken yazdığı sebep.</summary>
 public class MarkDefectiveRequest
 {
     [Required(ErrorMessage = "Sebep zorunludur.")]

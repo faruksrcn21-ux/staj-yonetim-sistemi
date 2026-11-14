@@ -1,7 +1,5 @@
 namespace StajEvrak.Api.Parsing;
 
-/// JPEG/PNG: Resimden metin okumak
-
 public class ImageDocumentParser : DocumentParserBase
 {
     protected override IReadOnlyCollection<string> SupportedExtensions { get; } =
@@ -9,16 +7,15 @@ public class ImageDocumentParser : DocumentParserBase
 
     protected override ParsedDocument ReadContent(string filePath) =>
         ParsedDocument.NotReadable(
-            "Görüntü dosyalarından metin okuma (OCR) final aşamasındadır; dosya sadece kabul edildi.");
+            "Görüntü dosyalarından metin okunamıyor; dosya kabul edildi.");
 }
-/// Eski .doc biçimi ikili bir formattır, OpenXML kütüphanesi onu okuyamaz. Dosya kabul edilir
 
-
+// Eski .doc ikili bir formattır, OpenXML okuyamaz; dosya sadece kabul edilir.
 public class LegacyWordDocumentParser : DocumentParserBase
 {
     protected override IReadOnlyCollection<string> SupportedExtensions { get; } = new[] { ".doc" };
 
     protected override ParsedDocument ReadContent(string filePath) =>
         ParsedDocument.NotReadable(
-            "Eski .doc biçimi vizede okunmuyor; belgeyi .docx olarak kaydedip yükleyebilirsiniz.");
+            "Eski .doc biçimindeki belgeden metin okunamıyor; belgeyi .docx olarak kaydedip yükleyebilirsiniz.");
 }

@@ -8,10 +8,6 @@ using StajEvrak.Api.Services;
 
 namespace StajEvrak.Api.Controllers;
 
-/// Evrak yükleme.
-/// POST /api/documents/upload            → yeni Ek-16 yükle (ROLE_STUDENT)
-/// POST /api/documents/{id}/reupload     → düzeltilip yeniden yükle (öğrenci: kendi ve Tamamlandı olmayan; admin: hepsi)
-/// Form alanları: file (zorunlu), manualFormData (isteğe bağlı JSON metin).
 [ApiController]
 [Route("api/documents")]
 public class DocumentUploadController : ControllerBase

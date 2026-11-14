@@ -31,8 +31,8 @@ public class DatasetImportService : IDatasetImportService
     public async Task<ImportResult> ImportAsync(string fileName, Stream file)
     {
         // Çok biçimlilik: hangi reader seçilirse seçilsin burada sadece Read() çağrılır.
-        var reader = _readers.Select(fileName);// desteklenmeyen uzantı -> NotSupportedException
-        var rows = reader.Read(file);         // sütun eksikse - FormatException
+        var reader = _readers.Select(fileName);
+        var rows = reader.Read(file);
 
         var result = new ImportResult();
         foreach (var row in rows)

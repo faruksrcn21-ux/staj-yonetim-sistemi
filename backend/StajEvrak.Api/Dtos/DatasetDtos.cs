@@ -2,7 +2,7 @@ using StajEvrak.Api.Models;
 
 namespace StajEvrak.Api.Dtos;
 
-//Dosyadan okunan ham satır: her alan metin, henüz doğrulanmadı.
+// Dosyadan okunan ham satır, henüz doğrulanmadı.
 public sealed record StudentRow(
     int RowNumber,
     string? FullName,
@@ -20,11 +20,7 @@ public sealed record StudentRow(
 
 public sealed record RowError(int RowNumber, string Reason);
 
-/// <summary>
-/// İçe aktarma özeti: eklenen / güncellenen / hatalı.
-/// Kapsülleme: Sayaçlar ve hata listesi sadece kayıt metotlarıyla değişir,
-/// hata listesi dışarıya salt okunur verilir.
-/// </summary>
+// Kapsülleme: sayaçlar sadece Record metotlarıyla değişir, hata listesi dışarıya salt okunur verilir.
 public sealed class ImportResult
 {
     private readonly List<RowError> _errors = new();
@@ -39,7 +35,7 @@ public sealed class ImportResult
     public void RecordError(int rowNumber, string reason) => _errors.Add(new RowError(rowNumber, reason));
 }
 
-/// <summary>Admin ekranında listelenen kayıt. Kimlik no maskelenir (hassas veri).</summary>
+// Kimlik no hassas veri olduğu için maskeli verilir.
 public record DatasetRecordResponse(
     int Id,
     string FullName,

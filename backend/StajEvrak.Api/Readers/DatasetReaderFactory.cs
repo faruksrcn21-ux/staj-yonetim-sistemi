@@ -1,11 +1,10 @@
 namespace StajEvrak.Api.Readers;
 
-//Dosya uzantısına göre doğru reader'ı seçer.
+// Dosya uzantısına göre doğru okuyucuyu seçer.
 public class DatasetReaderFactory
 {
     private readonly IEnumerable<IStudentDatasetReader> _readers;
 
-    // DI, kayıtlı tüm reader'ları buraya verir.
     public DatasetReaderFactory(IEnumerable<IStudentDatasetReader> readers) => _readers = readers;
 
     public IStudentDatasetReader Select(string fileName)

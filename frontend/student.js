@@ -1,4 +1,4 @@
-/* Öğrenci ekranı - sadece student.html'de çalışır (app.js önce yüklenmeli) */
+/* Öğrenci ekranı (student.html) */
 (function () {
   const user = Session.require(ROLE_STUDENT);
   if (!user) return;
@@ -11,7 +11,7 @@
   $("user-name").textContent = user.username;
   $("logout-btn").addEventListener("click", () => Session.logout());
 
-  // Ek-16 verilerini elle girme formu (alanlar app.js'teki FIELDS'tan gelir)
+  // Ek-16 bilgilerini elle girme formu
   $("fields").innerHTML = FIELDS.map(([k, label, type]) =>
     '<div class="field"><label for="f_' + k + '">' + esc(label) + '</label><input id="f_' + k + '" name="' + k + '" type="' + type + '"></div>'
   ).join("");
@@ -76,10 +76,10 @@
     try {
       const doc = await api.uploadDocument({ data, file, replaceId });
       dlg.close();
-      // Karşılaştırma henüz yapılmadıysa (statü Yüklendi) sadece yüklendi denir.
+      // Karşılaştırma henüz yapılmadıysa sadece yüklendi denir.
       let text = !doc.comparison ? "Evrak yüklendi."
         : doc.comparison.ready ? "Evrak yüklendi, teslime hazır." : "Evrak yüklendi, uyuşmayan alanlar var.";
-      // Belgeden metin okunamadıysa (görsel, .doc, taranmış PDF) sebebi gösterilir.
+      // Belge okunamadıysa sebebi gösterilir.
       if (doc.parse && !doc.parse.isReadable && doc.parse.reason) text += " Not: " + doc.parse.reason;
       toast(text);
       load();

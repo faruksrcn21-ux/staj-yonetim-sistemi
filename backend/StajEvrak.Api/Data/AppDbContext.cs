@@ -4,11 +4,6 @@ using StajEvrak.Api.Models;
 
 namespace StajEvrak.Api.Data;
 
-/// <summary>
-/// Veritabanı bağlantısı. C# sınıflarını tablolara eşler.
-/// Tablo ve sütun isimleri ortak ER diyagramıyla (docs/01_VERITABANI_ER_DIYAGRAMI.md)
-/// aynı olacak şekilde snake_case verilmiştir.
-/// </summary>
 public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
@@ -23,9 +18,7 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // ---- users ----
-        // Student ve Admin aynı "users" tablosunda tutulur (Table-Per-Hierarchy).
-        // Hangi satırın Student, hangisinin Admin olduğunu "role" sütunu belirler.
+        // Student ve Admin aynı users tablosunda; hangisi olduğunu role sütunu belirler.
         modelBuilder.Entity<BaseUser>(e =>
         {
             e.ToTable("users");
@@ -47,7 +40,6 @@ public class AppDbContext : DbContext
                 .HasValue<Admin>(Roles.Admin);
         });
 
-        // ---- login_logs ----
         modelBuilder.Entity<LoginLog>(e =>
         {
             e.ToTable("login_logs");
@@ -59,14 +51,12 @@ public class AppDbContext : DbContext
             e.Property(l => l.AttemptTime).HasColumnName("attempt_time");
             e.Property(l => l.LogStatus).HasColumnName("log_status").HasMaxLength(50).IsRequired();
 
-            // Kullanıcı silinirse logları kalır, sadece user_id boşalır.
             e.HasOne(l => l.User).WithMany().HasForeignKey(l => l.UserId).OnDelete(DeleteBehavior.SetNull);
 
-            // IP kilidi kontrolü "bu IP'den son 15 dk'daki denemeler" diye sorgulayacağı için.
+            // IP kilidi son 15 dakikadaki denemeleri bu iki sütunla sorgular.
             e.HasIndex(l => new { l.IpAddress, l.AttemptTime });
         });
 
-        // ---- revoked_tokens ----
         modelBuilder.Entity<RevokedToken>(e =>
         {
             e.ToTable("revoked_tokens");
@@ -81,7 +71,6 @@ public class AppDbContext : DbContext
             e.HasOne(t => t.User).WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        // ---- admin_test_dataset ----
         modelBuilder.Entity<AdminTestDataset>(e =>
         {
             e.ToTable("admin_test_dataset");
@@ -100,12 +89,10 @@ public class AppDbContext : DbContext
             e.Property(d => d.Phone).HasColumnName("phone").HasMaxLength(20);
             e.Property(d => d.HealthInsuranceStatus).HasColumnName("health_insurance_status").HasMaxLength(50);
 
-            // Veri seti içe aktarılırken "aynı öğrenci" kimlik no ile bulunur (TC veya yabancı
-            // kimlik no; ekle ya da güncelle). Aynı kimlik no ile iki satır olamaz.
+            // İçe aktarmada öğrenci kimlik no ile bulunur; aynı kimlik no iki kez olamaz.
             e.HasIndex(d => d.TcNo).IsUnique();
         });
 
-        // ---- documents ----
         modelBuilder.Entity<Document>(e =>
         {
             e.ToTable("documents");
@@ -122,17 +109,11 @@ public class AppDbContext : DbContext
             e.Property(d => d.ComparisonReport).HasColumnName("comparison_report");
             e.Property(d => d.UploadedAt).HasColumnName("uploaded_at");
 
-            // ER: users (1) ---> (N) documents. Kullanıcı silinirse belgeleri de silinir.
             e.HasOne(d => d.User).WithMany().HasForeignKey(d => d.UserId).OnDelete(DeleteBehavior.Cascade);
-
-            // Admin ekranı belgeleri statüye göre listeleyeceği için (ör. "Tamamlandı" sekmesi).
             e.HasIndex(d => d.Status);
         });
 
-        // ---- Tarih/saat ----
-        // Uygulama tüm zamanları UTC tutar. SQLite saat dilimi bilgisi saklamadığı için,
-        // okunan değerler "UTC" olarak işaretlenir (aksi halde yanıtta 'Z' kaybolur ve
-        // frontend saati yerel saat sanabilir).
+        // SQLite saat dilimi saklamaz; okunan tarihler UTC olarak işaretlenir.
         var utcConverter = new ValueConverter<DateTime, DateTime>(
             v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
 

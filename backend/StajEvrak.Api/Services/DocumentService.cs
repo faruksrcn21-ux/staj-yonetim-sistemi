@@ -5,28 +5,19 @@ using StajEvrak.Api.Storage;
 
 namespace StajEvrak.Api.Services;
 
-/// <summary>Belge işleminin sonucu; controller bunu HTTP durum koduna çevirir.</summary>
 public enum DocumentOperationStatus
 {
     Success,
-    NotFound,          // 404: belge yok
-    NotOwner,          // 403: başkasının belgesi
-    Completed,         // 403: öğrenci "Tamamlandı" belgeyi değiştirmeye çalışıyor (S3)
-    InvalidTransition, // 409: statü akışına aykırı geçiş (ör. Hatalı/Eksik belgeyi onaylamak)
+    NotFound,          // 404
+    NotOwner,          // 403
+    Completed,         // 403
+    InvalidTransition, // 409
 }
 
 public record DocumentOperationResult(DocumentOperationStatus Status, Document? Document = null, string? Message = null);
 
-/// <summary>
-/// Belge listeleme, silme ve statü değiştirme işlemleri (hoca Bölüm 4.2, 5 ve S3).
-///
-/// "Kim neye erişebilir" kuralı kullanıcı sınıflarındadır (BaseUser.CheckDocumentAccess,
-/// çok biçimlilik); statü geçiş kuralları Document sınıfındadır (kapsülleme).
-/// Bu servis sadece ikisini veritabanıyla birleştirir.
-///
-/// Not: Dosya yükleme / yeniden yükleme (4.1) 2. geliştiricinin DocumentUploadService'indedir;
-/// orada da yetki için <see cref="CheckAccessAsync"/> kullanılır.
-/// </summary>
+// Erişim kuralı kullanıcı sınıflarında, statü kuralları Document'ta;
+// bu servis ikisini veritabanıyla birleştirir.
 public class DocumentService
 {
     private readonly AppDbContext _db;
@@ -38,18 +29,14 @@ public class DocumentService
         _files = files;
     }
 
-    /// <summary>Öğrencinin kendi belgeleri (en yeni en üstte).</summary>
     public Task<List<Document>> GetByUserAsync(int userId) =>
         _db.Documents
-            .Include(d => d.User) // yanıttaki kullanıcı adı (username) dolu gelsin
+            .Include(d => d.User)
             .Where(d => d.UserId == userId)
             .OrderByDescending(d => d.Id)
             .ToListAsync();
 
-    /// <summary>
-    /// Admin için tüm belgeler. status verilirse sadece o statüdekiler
-    /// (ör. "TAMAMLANDI" → admin panelindeki "Tamamlandı" sekmesi, hoca 4.7).
-    /// </summary>
+    // status verilirse sadece o statüdeki belgeler döner.
     public Task<List<Document>> GetAllAsync(string? status)
     {
         var query = _db.Documents.Include(d => d.User).AsQueryable();
@@ -60,10 +47,6 @@ public class DocumentService
         return query.OrderByDescending(d => d.Id).ToListAsync();
     }
 
-    /// <summary>
-    /// Belgeyi bulur ve kullanıcının erişim yetkisini kontrol eder.
-    /// modify = true: değiştirme/silme, false: görüntüleme.
-    /// </summary>
     public async Task<DocumentOperationResult> CheckAccessAsync(int documentId, int userId, bool modify)
     {
         var document = await _db.Documents.Include(d => d.User).FirstOrDefaultAsync(d => d.Id == documentId);
@@ -85,7 +68,6 @@ public class DocumentService
         };
     }
 
-    /// <summary>Belgeyi siler (öğrenci: kendi ve Tamamlandı olmayan; admin: hepsi).</summary>
     public async Task<DocumentOperationResult> DeleteAsync(int documentId, int userId)
     {
         var access = await CheckAccessAsync(documentId, userId, modify: true);
@@ -96,21 +78,17 @@ public class DocumentService
         _db.Documents.Remove(access.Document!);
         await _db.SaveChangesAsync();
 
-        // Kayıt silindikten sonra sunucudaki dosya da silinir (yetim dosya kalmasın).
-        // Önce veritabanı: kayıt silinemezse dosya yerinde kalır, belge bozulmaz.
+        // Dosya, kayıt silindikten sonra silinir; kayıt silinemezse dosya yerinde kalır.
         _files.Delete(filePath);
         return access;
     }
 
-    /// <summary>Admin: Yüklendi → İnceleniyor.</summary>
     public Task<DocumentOperationResult> StartReviewAsync(int documentId) =>
         ChangeStatusAsync(documentId, d => d.StartReview());
 
-    /// <summary>Admin: İnceleniyor → Onaylandı → Tamamlandı.</summary>
     public Task<DocumentOperationResult> ApproveAsync(int documentId) =>
         ChangeStatusAsync(documentId, d => d.Approve());
 
-    /// <summary>Admin: İnceleniyor → Hatalı/Eksik (sebep raporda görünür).</summary>
     public Task<DocumentOperationResult> MarkDefectiveAsync(int documentId, string reason) =>
         ChangeStatusAsync(documentId, d => d.MarkDefective(reason));
 
@@ -122,7 +100,7 @@ public class DocumentService
 
         try
         {
-            change(document); // izin verilmeyen geçişte Document hata fırlatır
+            change(document);
         }
         catch (InvalidOperationException ex)
         {

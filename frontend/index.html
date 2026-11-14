@@ -30,13 +30,12 @@
       <h2 id="form-title">Hesabına giriş yap</h2>
 
       <form id="auth-form" novalidate>
-        <!-- Rol seçilmez: rol girişte sunucudan gelir (ROLE_STUDENT / ROLE_ADMIN). -->
-        <!-- Giriş: kullanıcı adı veya e-posta (hoca: "Kullanıcı adı / e-posta + şifre") -->
+        <!-- Rol seçilmez, girişte sunucudan gelir. -->
         <div class="field" data-only="login">
           <label for="identifier">Kullanıcı adı veya e-posta</label>
           <input id="identifier" name="identifier" type="text" autocomplete="username">
         </div>
-        <!-- Kayıt: sadece öğrenci hesabı oluşturulur, şifreyi öğrenci belirler (hoca cevabı #4) -->
+        <!-- Kayıt sadece öğrenci hesabı oluşturur. -->
         <div class="field" data-only="register">
           <label for="username">Kullanıcı adı</label>
           <input id="username" name="username" type="text" autocomplete="username">

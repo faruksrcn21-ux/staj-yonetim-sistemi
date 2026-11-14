@@ -8,18 +8,6 @@ using StajEvrak.Api.Services;
 
 namespace StajEvrak.Api.Controllers;
 
-/// <summary>
-/// Belge görüntüleme ve silme (öğrenci + admin).
-///
-///   GET    /api/documents        → öğrencinin kendi belgeleri (ROLE_STUDENT)
-///   GET    /api/documents/{id}   → tek belge (öğrenci: sadece kendi; admin: hepsi)
-///   DELETE /api/documents/{id}   → sil (öğrenci: kendi ve Tamamlandı değilse; admin: hepsi)
-///
-/// Hoca S3: "Tamamlandı" belgeyi öğrenci değiştiremez/silemez, admin güncelleyip silebilir.
-/// Kural kullanıcı sınıflarında (Student/Admin.CheckDocumentAccess) – çok biçimlilik.
-///
-/// Dosya yükleme / yeniden yükleme (4.1) 2. geliştiricinin endpoint'indedir.
-/// </summary>
 [ApiController]
 [Route("api/documents")]
 public class DocumentsController : ControllerBase
@@ -57,11 +45,7 @@ public class DocumentsController : ControllerBase
     }
 }
 
-/// <summary>
-/// DocumentService sonucunu HTTP yanıtına çevirir.
-/// Not: Buradaki 403'lerde redirectTo yoktur; kullanıcı giriş yapmış ama bu belgeye
-/// izni yok. Frontend oturumu kapatmadan sadece mesajı gösterir.
-/// </summary>
+// Buradaki 403'lerde redirectTo yok: kullanıcı giriş yapmış ama bu belgeye izni yok.
 internal static class DocumentResults
 {
     public static IActionResult ToActionResult(ControllerBase c, DocumentOperationResult r) => r.Status switch

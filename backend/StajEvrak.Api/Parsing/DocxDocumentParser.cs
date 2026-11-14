@@ -3,9 +3,8 @@ using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace StajEvrak.Api.Parsing;
 
-
-/// .docx okuyucu. Ek-16 formu tablo tabanlıdır, bu yüzden hem düz satırları hem de tabloları
-/// hücre hücre döndürür. Word'deki onay kutuları (sağlık yardım statüsü) işaretliyse ☒, değilse ☐ olarak metinde yer alır; Word kutuyu işaretleyince bu karakteri kendisi günceller.
+// Ek-16 tablo tabanlı olduğu için hem satırlar hem tablo hücreleri okunur.
+// İşaretli onay kutusu metinde ☒, boş olan ☐ olarak gelir.
 public class DocxDocumentParser : DocumentParserBase
 {
     protected override IReadOnlyCollection<string> SupportedExtensions { get; } = new[] { ".docx" };

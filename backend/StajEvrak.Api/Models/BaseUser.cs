@@ -1,41 +1,23 @@
 namespace StajEvrak.Api.Models;
 
-/// <summary>
-/// Tüm kullanıcıların ortak atası (users tablosu).
-///
-/// NYP:
-///  - Soyutlama (Abstraction): Sınıf abstract'tır; doğrudan "kullanıcı" oluşturulamaz,
-///    ancak Student veya Admin oluşturulabilir.
-///  - Kapsülleme (Encapsulation): Alanların set'i private'tır. Şifre hash'i ve
-///    hatalı deneme sayacı dışarıdan değiştirilemez; sadece bu sınıfın
-///    metotlarıyla (RegisterFailedAttempt, ResetFailedAttempts) değişir.
-///  - Kalıtım (Inheritance): Student ve Admin bu sınıftan türer.
-///  - Çok Biçimlilik (Polymorphism): GetDashboardView() ve CheckDocumentAccess() her alt sınıfta farklıdır.
-/// </summary>
+// Soyutlama: abstract sınıf, doğrudan nesnesi oluşturulamaz.
+// Kapsülleme: alanlar private set; sadece bu sınıfın metotlarıyla değişir.
+// Kalıtım: Student ve Admin bu sınıftan türer.
+// Çok biçimlilik: GetDashboardView ve CheckDocumentAccess her rolde farklı çalışır.
 public abstract class BaseUser
 {
-    /// <summary>Üst üste bu kadar hatalı şifrede hesap kilitlenir (hoca: 5).</summary>
     public const int MaxFailedAttempts = 5;
-
-    /// <summary>Kilit süresi (dokümanda belirtilmemiş, 15 dk seçildi).</summary>
     public static readonly TimeSpan LockDuration = TimeSpan.FromMinutes(15);
 
     public int Id { get; private set; }
     public string Username { get; private set; } = string.Empty;
     public string Email { get; private set; } = string.Empty;
     public string PasswordHash { get; private set; } = string.Empty;
-
-    /// <summary>ROLE_STUDENT veya ROLE_ADMIN. Alt sınıf tarafından belirlenir.</summary>
     public string Role { get; private set; } = string.Empty;
-
     public int FailedAttempts { get; private set; }
-
-    /// <summary>Doluysa ve gelecekteki bir zamansa hesap kilitlidir.</summary>
     public DateTime? LockedUntil { get; private set; }
-
     public DateTime CreatedAt { get; private set; }
 
-    // EF Core'un veritabanından nesne oluşturabilmesi için gerekli.
     protected BaseUser() { }
 
     protected BaseUser(string username, string email, string passwordHash, string role)
@@ -48,14 +30,9 @@ public abstract class BaseUser
         CreatedAt = DateTime.UtcNow;
     }
 
-    /// <summary>Verilen anda hesap kilitli mi?</summary>
     public bool IsLocked(DateTime now) => LockedUntil.HasValue && LockedUntil.Value > now;
 
-    /// <summary>
-    /// Hatalı şifre denemesini kaydeder. Sayaç MaxFailedAttempts'a ulaşırsa
-    /// hesabı LockDuration kadar kilitler ve sayacı sıfırlar.
-    /// </summary>
-    /// <returns>Bu deneme sonucunda hesap kilitlendiyse true.</returns>
+    // 5. hatalı denemede hesap kilitlenir; kilitlendiyse true döner.
     public bool RegisterFailedAttempt(DateTime now)
     {
         FailedAttempts++;
@@ -70,25 +47,14 @@ public abstract class BaseUser
         return false;
     }
 
-    /// <summary>Başarılı girişte sayaç ve kilit temizlenir.</summary>
     public void ResetFailedAttempts()
     {
         FailedAttempts = 0;
         LockedUntil = null;
     }
 
-    /// <summary>
-    /// Girişten sonra kullanıcının yönlendirileceği panel.
-    /// Çok biçimlilik: her rol kendi panelini döndürür.
-    /// </summary>
     public abstract string GetDashboardView();
 
-    /// <summary>
-    /// Bu kullanıcı verilen belgeyi görüntüleyebilir mi / değiştirip silebilir mi?
-    /// Çok biçimlilik: öğrenci ve admin için kural farklıdır (hoca S3, Bölüm 5):
-    ///  - Öğrenci: sadece kendi belgesi; "Tamamlandı" belgeyi değiştiremez/silemez.
-    ///  - Admin: her belgeyi görüntüler, "Tamamlandı" dahil güncelleyip silebilir.
-    /// </summary>
-    /// <param name="modify">true: değiştirme/silme, false: sadece görüntüleme.</param>
+    // modify: true ise değiştirme/silme, false ise sadece görüntüleme.
     public abstract DocumentAccess CheckDocumentAccess(Document document, bool modify);
 }

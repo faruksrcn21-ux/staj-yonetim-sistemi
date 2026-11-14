@@ -115,9 +115,8 @@ GET {{host}}/api/role-check/student
 Authorization: Bearer {{adminToken}}
 
 # ------------------------------------------------------------------
-# BELGELER (statü akışı + "Tamamlandı" yetkisi, hoca Bölüm 5 ve S3)
-# Not: Belge yükleme endpoint'i 2. geliştiricide. Önce bir belge yüklenmeli;
-# aşağıdaki {{docId}} yerine o belgenin id'sini yazın.
+# BELGELER (statü akışı ve "Tamamlandı" yetkisi)
+# Önce bir belge yükleyin; {{docId}} yerine o belgenin id'sini yazın.
 # ------------------------------------------------------------------
 @docId = 1
 
@@ -150,11 +149,11 @@ Content-Type: application/json
 POST {{host}}/api/admin/documents/{{docId}}/approve
 Authorization: Bearer {{adminToken}}
 
-### 22) Öğrenci "Tamamlandı" belgeyi silmeye çalışır -> 403 (S3)
+### 22) Öğrenci "Tamamlandı" belgeyi silmeye çalışır -> 403
 DELETE {{host}}/api/documents/{{docId}}
 Authorization: Bearer {{token}}
 
-### 23) Admin "Tamamlandı" belgeyi silebilir -> 204 (S3)
+### 23) Admin "Tamamlandı" belgeyi silebilir -> 204
 DELETE {{host}}/api/documents/{{docId}}
 Authorization: Bearer {{adminToken}}
 

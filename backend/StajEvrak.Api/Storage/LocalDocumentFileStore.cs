@@ -12,7 +12,7 @@ public class LocalDocumentFileStore : IDocumentFileStore
 
     public async Task<string> SaveAsync(Stream content, string extension)
     {
-        // Güvenlik: kullanıcının verdiği dosya adı diske yazılmaz (yol manipülasyonu ve çakışma riski). Rastgele bir ad kullanılır, orijinal ad sadece veri tabanında durur.
+        // Kullanıcının dosya adı diske yazılmaz (yol manipülasyonu riski); rastgele ad verilir.
         var path = Path.Combine(_root, $"{Guid.NewGuid():N}{extension}");
 
         await using var target = File.Create(path);

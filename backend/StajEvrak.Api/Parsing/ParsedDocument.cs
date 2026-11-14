@@ -1,10 +1,7 @@
 namespace StajEvrak.Api.Parsing;
 
-/// Bir belgeden okunan ham içerik. Oluşturulduktan sonra değiştirilemez.
-///Lines: belgedeki tüm metin satırları (Word'de kutucuk işaretleri ☒/☐ olarak gelir).
-///   TableRows : sadece Word'de dolu; her satır, o satırdaki hücrelerin metni(formda "etiket hücresi → sağındaki değer hücresi" okuması için).
-/// Okunamayan belge (görsel, .doc, bozuk dosya) hata fırlatmaz; IsReadable = false olur ve sebep UnreadableReason'da durur.
-
+// Belgeden okunan ham içerik; oluşturulduktan sonra değiştirilemez.
+// TableRows sadece Word'de dolu. Okunamayan belgede IsReadable false olur.
 public sealed class ParsedDocument
 {
     public bool IsReadable { get; }

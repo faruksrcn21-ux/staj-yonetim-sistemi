@@ -16,17 +16,9 @@ public record LoginResult(
     int? RemainingAttempts = null,
     DateTime? LockedUntil = null);
 
-/// <summary>
-/// Kayıt ve giriş iş mantığı (hocanın dokümanı Bölüm 4.1).
-/// HTTP'den habersizdir: sonucu LoginResult / RegisterResult olarak döndürür,
-/// hangi HTTP kodunun döneceğine AuthController karar verir.
-/// </summary>
 public class AuthService
 {
-    /// <summary>IP kilidi için bakılan zaman penceresi ve kilit süresi.</summary>
     public static readonly TimeSpan IpWindow = TimeSpan.FromMinutes(15);
-
-    /// <summary>Aynı IP'den pencere içinde bu kadar yanlış kullanıcı adı denemesinde IP kilitlenir.</summary>
     public const int MaxFailedAttemptsPerIp = 5;
 
     private readonly AppDbContext _db;
@@ -38,13 +30,7 @@ public class AuthService
         _hasher = hasher;
     }
 
-    // ------------------------------------------------------------------ KAYIT
-
-    /// <summary>
-    /// Öğrenci kaydı. Hoca cevabı #4: "Kullanıcılar hesaplarını kendileri
-    /// oluşturabilmeli, şifrelerini kendileri belirleyebilmelidir."
-    /// Kayıt ekranından sadece Student oluşturulur, Admin oluşturulamaz.
-    /// </summary>
+    // Kayıt ekranından sadece öğrenci oluşturulur.
     public async Task<RegisterResult> RegisterAsync(string username, string email, string password)
     {
         username = username.Trim();
@@ -65,21 +51,6 @@ public class AuthService
         return new RegisterResult(RegisterStatus.Success, student);
     }
 
-    // ------------------------------------------------------------------ GİRİŞ
-
-    /// <summary>
-    /// Kullanıcı adı veya e-posta + şifre ile giriş.
-    ///
-    /// Adımlar:
-    ///  1. IP kilitli mi?  (son 15 dk'da bu IP'den 5 yanlış kullanıcı adı) -> IpLocked
-    ///  2. Kullanıcı var mı? Yoksa UNKNOWN_USER logla                    -> InvalidCredentials
-    ///       - bu 5. yanlış kullanıcı adıysa IP 15 dk kilitlenir          -> IpLocked
-    ///  3. Hesap kilitli mi? Kilitliyse ACCOUNT_LOCKED logla             -> AccountLocked
-    ///  4. Şifre doğru mu?  Yanlışsa sayacı artır, FAILED_PASSWORD logla
-    ///       - 5. hatada hesap 15 dk kilitlenir                          -> AccountLocked
-    ///       - değilse kalan hakkı bildir                                -> InvalidCredentials
-    ///  5. Başarılı: sayaç ve kilit sıfırlanır                           -> Success
-    /// </summary>
     public async Task<LoginResult> LoginAsync(string identifier, string password, string ipAddress)
     {
         var now = DateTime.UtcNow;
@@ -93,13 +64,13 @@ public class AuthService
             return new LoginResult(LoginStatus.IpLocked, LockedUntil: ipLockedUntil);
         }
 
-        // 2) Kullanıcıyı bul ('@' içeriyorsa e-posta, yoksa kullanıcı adı)
+        // 2) Kullanıcı
         var user = await FindByIdentifierAsync(identifier);
         if (user is null)
         {
             await LogAsync(null, identifier, ipAddress, LoginLog.UnknownUser, now);
 
-            // Bu deneme 5. yanlış kullanıcı adıysa IP şimdi kilitlendi (hesap kilidindeki gibi hemen bildir).
+            // Bu deneme 5. yanlış kullanıcı adıysa IP şimdi kilitlenmiştir.
             var lockedUntilNow = await GetIpLockedUntilAsync(ipAddress, now);
             return lockedUntilNow is not null
                 ? new LoginResult(LoginStatus.IpLocked, LockedUntil: lockedUntilNow)
@@ -118,7 +89,6 @@ public class AuthService
         {
             bool lockedNow = user.RegisterFailedAttempt(now);
             await LogAsync(user.Id, identifier, ipAddress, LoginLog.FailedPassword, now);
-            // LogAsync SaveChanges çağırdığı için kullanıcının sayaç/kilit değişikliği de kaydedildi.
 
             return lockedNow
                 ? new LoginResult(LoginStatus.AccountLocked, LockedUntil: user.LockedUntil)
@@ -133,14 +103,7 @@ public class AuthService
         return new LoginResult(LoginStatus.Success, user);
     }
 
-    // ------------------------------------------------------------------ ÇIKIŞ
-
-    /// <summary>
-    /// Hoca: "Çıkış işlemi token/session geçersiz kılar."
-    /// JWT süresi dolana kadar kendi başına geçerli olduğu için, çıkışta token'ın
-    /// kimliği (jti) revoked_tokens tablosuna yazılır. Program.cs'teki doğrulama
-    /// her istekte IsTokenRevokedAsync ile bu tabloya bakar.
-    /// </summary>
+    // Token'ın jti'si iptal listesine yazılır; her istekte bu listeye bakılır.
     public async Task LogoutAsync(string jti, int userId, DateTime tokenExpiresAt)
     {
         var now = DateTime.UtcNow;
@@ -148,18 +111,15 @@ public class AuthService
         if (!await _db.RevokedTokens.AnyAsync(t => t.Jti == jti))
             _db.RevokedTokens.Add(new RevokedToken(jti, userId, tokenExpiresAt, now));
 
-        // Süresi zaten dolmuş token'lar kendiliğinden geçersizdir; kayıtlarını tutmaya gerek yok.
+        // Süresi dolmuş token'lar zaten geçersiz; kayıtları temizlenir.
         var expired = await _db.RevokedTokens.Where(t => t.ExpiresAt < now).ToListAsync();
         _db.RevokedTokens.RemoveRange(expired);
 
         await _db.SaveChangesAsync();
     }
 
-    /// <summary>Bu token çıkış yapılarak iptal edilmiş mi?</summary>
     public Task<bool> IsTokenRevokedAsync(string jti) =>
         _db.RevokedTokens.AnyAsync(t => t.Jti == jti);
-
-    // ------------------------------------------------------------------ YARDIMCILAR
 
     private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
 
@@ -174,13 +134,8 @@ public class AuthService
         return _db.Users.FirstOrDefaultAsync(u => u.Username == identifier);
     }
 
-    /// <summary>
-    /// Hoca: "5 hatalı kullanıcı adı / şifre denemesinde sistem kilitlenir."
-    ///  - Yanlış ŞİFRE: kullanıcı belli olduğu için HESAP kilitlenir (BaseUser).
-    ///  - Yanlış KULLANICI ADI: kilitlenecek bir hesap olmadığı için IP üzerinden
-    ///    sayılır. Son 15 dk içinde bu IP'den 5 "UNKNOWN_USER" denemesi varsa IP kilitlidir.
-    /// </summary>
-    /// <returns>Kilitliyse kilidin açılacağı zaman, değilse null.</returns>
+    // Yanlış şifrede hesap kilitlenir. Yanlış kullanıcı adında kilitlenecek hesap olmadığı için
+    // IP sayılır: son 15 dakikada bu IP'den 5 deneme varsa IP kilitlidir.
     private async Task<DateTime?> GetIpLockedUntilAsync(string ipAddress, DateTime now)
     {
         var windowStart = now - IpWindow;

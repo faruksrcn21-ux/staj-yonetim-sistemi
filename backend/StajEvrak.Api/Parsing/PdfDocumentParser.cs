@@ -3,11 +3,10 @@ using UglyToad.PdfPig.Content;
 
 namespace StajEvrak.Api.Parsing;
 
-/// PDF okuyucu (PdfPig). PDF'te tablo yapısı yoktur, sadece konumlu kelimeler vardır. Aynı hizadaki kelimeleri tek satırda birleştiriyoruz. Not: iki sütunlu formlarda sol ve sağ hücrenin metni aynı satıra düşer; bunu alan ayıklama aşaması (Adım B) çözecek.
-
+// PDF'te tablo yoktur, sadece konumlu kelimeler vardır; aynı hizadakiler tek satırda birleştirilir.
 public class PdfDocumentParser : DocumentParserBase
 {
-    // Aynı satırdaki kelimelerin dikey konum farkı (PDF birimi) bu değerden küçükse aynı satırdır.
+    // Dikey konum farkı bundan küçük olan kelimeler aynı satır sayılır.
     private const double LineTolerance = 3.0;
 
     protected override IReadOnlyCollection<string> SupportedExtensions { get; } = new[] { ".pdf" };
@@ -22,7 +21,7 @@ public class PdfDocumentParser : DocumentParserBase
 
         if (lines.Count == 0)
             return ParsedDocument.NotReadable(
-                "PDF'te okunabilir metin bulunamadı (taranmış görüntü olabilir; OCR final aşamasındadır).");
+                "PDF'te okunabilir metin bulunamadı; belge taranmış bir görüntü olabilir.");
 
         return ParsedDocument.Readable(lines);
     }

@@ -6,17 +6,6 @@ using StajEvrak.Api.Services;
 
 namespace StajEvrak.Api.Controllers;
 
-/// <summary>
-/// Admin belge işlemleri (sadece ROLE_ADMIN; diğerleri 403).
-///
-///   GET  /api/admin/documents?status=TAMAMLANDI  → tüm belgeler, istenirse statüye göre
-///                                                  (hoca 4.2/4.7: "Tamamlandı" ayrı sekmede)
-///   POST /api/admin/documents/{id}/review        → Yüklendi → İnceleniyor
-///   POST /api/admin/documents/{id}/approve       → İnceleniyor → Onaylandı → Tamamlandı
-///   POST /api/admin/documents/{id}/mark-defective {reason} → İnceleniyor → Hatalı/Eksik
-///
-/// Akışa aykırı istek (ör. Hatalı/Eksik belgeyi onaylamak) → 409.
-/// </summary>
 [ApiController]
 [Route("api/admin/documents")]
 [Authorize(Roles = Roles.Admin)]

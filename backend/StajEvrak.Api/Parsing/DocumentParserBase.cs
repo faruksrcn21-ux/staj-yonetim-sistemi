@@ -1,9 +1,7 @@
 namespace StajEvrak.Api.Parsing;
 
-/// bir kez yazılır. Alt sınıflar sadece "dosyadan içeriği nasıl okurum" kısmını (ReadContent) yazar.
-/// Tüm parser'ların ortak davranışı (Kalıtım): dosya var mı kontrolü ve hata yönetimi burada,
-/// Bozuk dosya uygulamayı çökertmez, "okunamadı" sonucuna çevrilir.
-
+// Kalıtım: ortak kontrol ve hata yönetimi burada; alt sınıflar sadece ReadContent'i yazar.
+// Bozuk dosya uygulamayı çökertmez, "okunamadı" sonucuna çevrilir.
 public abstract class DocumentParserBase : IDocumentParser
 {
     protected abstract IReadOnlyCollection<string> SupportedExtensions { get; }

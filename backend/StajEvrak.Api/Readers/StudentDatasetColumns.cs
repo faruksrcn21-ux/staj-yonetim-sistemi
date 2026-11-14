@@ -1,6 +1,6 @@
 namespace StajEvrak.Api.Readers;
 
-//Dosyadaki sütun sırası . İki reader da aynı sırayı kullanır.
+// CSV ve Excel okuyucularının ortak sütun sırası.
 public static class StudentDatasetColumns
 {
     public const int Count = 12;

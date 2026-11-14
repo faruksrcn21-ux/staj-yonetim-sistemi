@@ -4,7 +4,6 @@ using StajEvrak.Api.Services;
 
 namespace StajEvrak.Api.Data;
 
-/// <summary>appsettings içindeki "AdminSeed" bölümü.</summary>
 public class AdminSeedOptions
 {
     public const string SectionName = "AdminSeed";
@@ -14,10 +13,7 @@ public class AdminSeedOptions
     public string Password { get; set; } = string.Empty;
 }
 
-/// <summary>
-/// Uygulama açılışında başlangıç verilerini oluşturur.
-/// Kayıt ekranı sadece öğrenci oluşturduğu için admin hesabı burada oluşturulur.
-/// </summary>
+// Kayıt ekranı sadece öğrenci oluşturduğu için admin hesabı açılışta burada oluşturulur.
 public static class DbSeeder
 {
     public static async Task SeedAdminAsync(
@@ -31,7 +27,6 @@ public static class DbSeeder
             return;
         }
 
-        // Zaten bir admin varsa hiçbir şey yapma (her açılışta tekrar oluşturmaz).
         if (await db.Admins.AnyAsync())
             return;
 

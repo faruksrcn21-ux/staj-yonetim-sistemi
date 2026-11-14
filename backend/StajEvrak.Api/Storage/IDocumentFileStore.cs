@@ -1,8 +1,8 @@
 namespace StajEvrak.Api.Storage;
 
-/// Soyutlama: Servis dosyanın diskte mi, bulutta mı durduğunu bilmez.
+// Soyutlama: servis dosyanın nerede saklandığını bilmez.
 public interface IDocumentFileStore
 {
-    Task<string> SaveAsync(Stream content, string extension);   // kaydedilen yolu döner
+    Task<string> SaveAsync(Stream content, string extension);
     void Delete(string filePath);
 }
