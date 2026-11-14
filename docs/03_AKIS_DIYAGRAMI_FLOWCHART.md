@@ -1,55 +1,54 @@
-# Sistem Akış Diyagramı (Flowchart) Taslağı - Vize Süreci
+# 03 - Akış Diyagramı (Flowchart)
 
-Bu diyagram, kullanıcının sisteme girişinden itibaren Öğrenci ve Admin rollerinin vize kapsamındaki tüm işlem adımlarını gösterir.
-
-## 1. Adım Adım Süreç Akışı
-1. **Kimlik Doğrulama:** Kullanıcı kayıt olur veya giriş yapar. 5 hatalı şifre denemesi loglanır ve hesap kilitlenir.
-2. **Rol Yönlendirmesi:**
-   * `ROLE_STUDENT`: Öğrenci paneline yönlendirilir.
-   * `ROLE_ADMIN`: Admin paneline yönlendirilir.
-   * Yetkisiz erişimlerde HTTP 403 hatası verilir.
-3. **Öğrenci Süreci:**
-   * Ek-16 dosyası seçilir + arayüzdeki formdan manuel bilgiler girilir.
-   * **Uzantı Kontrolü:** Dosya `.doc`, `.docx`, `.pdf`, `.jpeg`, `.png` formatında değilse işlem reddedilir ve uyarı gösterilir.
-   * **Belge Okuma:** `.docx`/PDF kütüphanesi ile belgedeki alanlar otomatik okunur (OCR yok).
-   * **Karşılaştırma:** Belgeden okunan veriler, manuel girilen form verileri ve veritabanındaki Admin test veri seti karşılaştırılır.
-   * Belgenin teslime hazır olup olmadığı raporlanır ve kaydedilir.
-4. **Admin Süreci:**
-   * Test veri seti yüklenir ve veritabanına işlenir.
-   * "Tamamlandı" statüsündeki belgeler görüntülenir, güncellenir veya silinir (Öğrenci bu statüdeki belgeye dokunamaz).
-
----
-
-## 2. Görsel Akış Diyagramı (Mermaid)
+Giriş, evrak yükleme, karşılaştırma ve belge durum akışı.
 
 ```mermaid
 flowchart TD
-    Start([Başla]) --> HasAccount{Hesabı Var mı?}
-    HasAccount -- Hayır --> Register[Kayıt Ol Ekranı: Kullanıcı Şifresini Belirler]
-    Register --> Login[Giriş Ekranı: E-posta/Kullanıcı Adı + Şifre]
-    HasAccount -- Evet --> Login
+    A([Başla]) --> B[/"Kullanıcı adı veya e-posta ve şifre gir"/]
+    B --> C{"Hesap kilitli mi?"}
+    C -- Evet --> D["Kilit mesajı göster"]
+    D --> Z([Bitir])
+    C -- Hayır --> E{"Bilgiler doğru mu?"}
+    E -- Hayır --> F["Hatalı denemeyi logla, sayacı artır"]
+    F --> G{"5 hatalı deneme oldu mu?"}
+    G -- Evet --> H["Hesabı kilitle"]
+    H --> D
+    G -- Hayır --> B
+    E -- Evet --> I["JWT üret, rol token içinde"]
+    I --> J{"Rol nedir?"}
 
-    Login --> AuthCheck{Bilgiler Doğru mu?}
-    AuthCheck -- Hayır --> LogFail[Başarısız Girişi Logla & Sayacı Artır]
-    LogFail --> LockCheck{Hata Sayısı == 5 mi?}
-    LockCheck -- Evet --> LockAccount[Hesabı Kilitle] --> End([Bitir])
-    LockCheck -- Hayır --> Login
+    J -- ROLE_STUDENT --> S1["Öğrenci ekranı"]
+    S1 --> S2["Ek-16 bilgilerini forma elle gir"]
+    S2 --> S3["Evrak Yükle: dosya seç"]
+    S3 --> S4{"Format .doc .docx .pdf .jpeg .png mi?"}
+    S4 -- Hayır --> S5["Uyarı göster, dosyayı reddet"]
+    S5 --> S3
+    S4 -- Evet --> S6["Belge kaydedilir, durum: Yüklendi"]
+    S6 --> S7["Belgeden metni oku .docx / PDF kütüphanesiyle"]
+    S7 --> S8{"Belgedeki veri, forma girilen ve veri setiyle uyuşuyor mu?"}
+    S8 -- Evet --> S9["Durum: İnceleniyor, teslime hazır"]
+    S8 -- Hayır --> S10["Durum: Hatalı / Eksik, uyuşmayan alanları göster"]
+    S10 --> S11["Öğrenci düzeltip yeniden yükler"]
+    S11 --> S2
+    S9 --> S12["Sonucu öğrenciye göster"]
 
-    AuthCheck -- Evet --> RoleCheck{Kullanıcı Rolü Nedir?}
+    J -- ROLE_ADMIN --> K1["Admin ekranı"]
+    K1 --> K2["Test veri setini yükle CSV veya Excel"]
+    K2 --> K3["Veri veritabanına aktarılır"]
+    K1 --> K4["Belgeleri listele, durumu güncelle"]
+    K4 --> K5{"Durum Tamamlandı mı?"}
+    K5 -- Evet --> K6["Belge Tamamlananlar sekmesine geçer, öğrenci değiştiremez"]
+    K5 -- Hayır --> K7["Yüklenen belgeler sekmesinde kalır"]
 
-    %% ÖĞRENCİ AKIŞI
-    RoleCheck -- ROLE_STUDENT --> StudentPanel[Öğrenci Paneli]
-    StudentPanel --> UploadAction[Ek-16 Belgesi Seç & Manuel Formu Doldur]
-    UploadAction --> ExtCheck{Uzantı Geçerli mi?<br/>.doc/.docx/.pdf/.jpeg/.png}
-    ExtCheck -- Hayır --> ExtError[Hata Uyarısı Göster ve Reddet] --> StudentPanel
-    ExtCheck -- Evet --> ParseDoc[Kütüphane ile Belgedeki Alanları Otomatik Oku]
-    ParseDoc --> CompareData[Belge Verisi + Manuel Form + Test Veri Setini Karşılaştır]
-    CompareData --> SaveResult[Sonucu Kaydet & Teslime Hazır mı Raporla]
-    SaveResult --> StudentPanel
-
-    %% ADMİN AKIŞI
-    RoleCheck -- ROLE_ADMIN --> AdminPanel[Admin Paneli]
-    AdminPanel --> AdminChoice{Admin İşlemi Seç}
-    AdminChoice -- Test Veri Seti Yükle --> ImportDataset[Veri Setini Oku & Veritabanına Kaydet] --> AdminPanel
-    AdminChoice -- Belgeleri Yönet --> ManageDocs[Tamamlandı Belgeleri Görüntüle / Güncelle / Sil] --> AdminPanel
+    S12 --> Z
+    K3 --> Z
+    K6 --> Z
+    K7 --> Z
 ```
+
+## Kurallar
+
+- 5 hatalı denemede hesap kilitlenir, her başarısız deneme loglanır.
+- Rol JWT içinde taşınır, yetkisiz istek 403 döner ve login sayfasına yönlendirilir.
+- Vizede sadece format/uzantı kontrolü zorunlu. OCR ve ayrıntılı alan doğrulamaları finalde.
+- Öğrenci "Tamamlandı" belgeyi değiştiremez veya silemez, admin yapabilir.
