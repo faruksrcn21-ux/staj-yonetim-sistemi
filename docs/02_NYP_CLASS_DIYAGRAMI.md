@@ -1,77 +1,102 @@
-# Nesne Yönelimli Programlama (NYP) Class Diyagramı Taslağı
+# 02 - NYP Sınıf Diyagramı
 
-Bu yapı, projede zorunlu tutulan 4 temel NYP prensibini (**Kapsülleme, Soyutlama, Kalıtım, Çok Biçimlilik**) kod mimarisine doğrudan entegre etmek için hazırlanmıştır.
-
-## 1. NYP Prensiplerinin Uygulanma Yerleri
-1. **Kapsülleme (Encapsulation):** Tüm sınıf değişkenleri `private` (`-`) tanımlanır; erişim kontrollü `public` (`+`) getter/setter ve iş metotları üzerinden sağlanır.
-2. **Soyutlama (Abstraction):** `BaseUser` soyut sınıfı (`abstract class`) ve `IDocumentParser` arayüzü (`interface`) üzerinden ortak sözleşmeler tanımlanır.
-3. **Kalıtım (Inheritance):** `Student` ve `Admin` sınıfları `BaseUser` sınıfından türetilir. `PdfParser` ve `DocxParser` sınıfları `IDocumentParser` arayüzünü uygular.
-4. **Çok Biçimlilik (Polymorphism):** `DocumentService` sınıfı, dosyanın türüne göre arka planda hangi parser çalışırsa çalışsın hepsini tek bir `IDocumentParser` tipi üzerinden çağırır (`parser.extractFields(file)`).
-
----
-
-## 2. Sınıf Diyagramı (Mermaid)
+> Sınıf adları backend dosyalarından alındı. Üye (alan/metot) adları isterlere göre yazıldı, kodla karşılaştırıp düzelt.
 
 ```mermaid
 classDiagram
     class BaseUser {
-        <<Abstract>>
+        <<abstract>>
         -int id
         -string username
         -string email
         -string passwordHash
-        -string role
         -int failedAttempts
-        -boolean isLocked
-        +login(identifier, password) Token
-        +logout() void
-        +incrementFailedAttempts() void
-        +getDashboardView()* string
+        -datetime lockedUntil
+        +string Role*
+        +RegisterFailedAttempt() void
+        +IsLocked() bool
     }
 
     class Student {
         -string studentNo
-        +uploadDocument(file, manualFormData) DocumentReport
-        +getMyDocuments() List~Document~
-        +getDashboardView() string
+        -string tcNo
+        +string Role
     }
 
     class Admin {
-        +importTestDataset(datasetFile) boolean
-        +getAllDocuments() List~Document~
-        +updateCompletedDocument(docId, newData) boolean
-        +deleteCompletedDocument(docId) boolean
-        +getDashboardView() string
+        +string Role
     }
 
-    class IDocumentParser {
-        <<Interface>>
-        +validateFormat(fileName) boolean
-        +extractFields(filePath) Map~string, string~
+    class IPasswordHasher {
+        <<interface>>
+        +Hash(password) string
+        +Verify(password, hash) bool
     }
 
-    class PdfDocumentParser {
-        -string[] allowedExtensions
-        +validateFormat(fileName) boolean
-        +extractFields(filePath) Map~string, string~
+    class BCryptPasswordHasher {
+        +Hash(password) string
+        +Verify(password, hash) bool
     }
 
-    class DocxDocumentParser {
-        -string[] allowedExtensions
-        +validateFormat(fileName) boolean
-        +extractFields(filePath) Map~string, string~
+    class AuthService {
+        +Register(request) void
+        +Login(request) string
+        +Logout(token) void
     }
 
-    class DocumentComparisonService {
-        +compareFormAndFile(manualData, parsedData) boolean
-        +compareWithTestDataset(studentData, datasetRecord) boolean
-        +generateReport() string
+    class JwtTokenService {
+        +CreateToken(user) string
     }
 
-    BaseUser <|-- Student : Inheritance
-    BaseUser <|-- Admin : Inheritance
-    IDocumentParser <|.. PdfDocumentParser : Implements
-    IDocumentParser <|.. DocxDocumentParser : Implements
-    Student --> IDocumentParser : Uses (Polymorphism)
-    Student --> DocumentComparisonService : Uses
+    class DocumentService {
+        +Upload(student, file, formData) Document
+        +Delete(user, documentId) void
+        +UpdateStatus(admin, documentId, status) void
+    }
+
+    class StudentDatasetMatcher {
+        +Compare(formData, datasetRecord) ComparisonResult
+    }
+
+    class Document {
+        -int id
+        -string fileName
+        -DocumentStatus status
+        -string formData
+        -string comparisonResult
+        -datetime uploadedAt
+    }
+
+    class DocumentStatus {
+        <<enumeration>>
+        Uploaded
+        Reviewing
+        Faulty
+        Approved
+        Completed
+    }
+
+    class AdminTestDataset {
+        -string adSoyad
+        -string tcNo
+        -string ogrenciNo
+        -string email
+    }
+
+    BaseUser <|-- Student
+    BaseUser <|-- Admin
+    IPasswordHasher <|.. BCryptPasswordHasher
+    AuthService ..> IPasswordHasher : kullanir
+    AuthService ..> JwtTokenService : kullanir
+    DocumentService ..> StudentDatasetMatcher : kullanir
+    StudentDatasetMatcher ..> AdminTestDataset : okur
+    Student "1" --> "0..*" Document : yukler
+    Document --> DocumentStatus
 ```
+
+## NYP prensipleri
+
+- **Kapsülleme (Encapsulation):** Şifre hash'i ve deneme sayısı `private`, dışarıdan sadece `RegisterFailedAttempt()` ve `IsLocked()` ile yönetilir.
+- **Soyutlama (Abstraction):** `BaseUser` soyut sınıf, doğrudan nesnesi oluşturulmaz. `IPasswordHasher` arayüzü hash algoritmasının ayrıntısını gizler.
+- **Kalıtım (Inheritance):** `Student` ve `Admin`, `BaseUser`'dan türer.
+- **Çok biçimlilik (Polymorphism):** `Role` her alt sınıfta farklı değer döner. `AuthService`, `IPasswordHasher` üzerinden çalışır, algoritma değişse (BCrypt yerine Argon2) servis değişmez.

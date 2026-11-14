@@ -1,123 +1,85 @@
-# Veritabanı ER Diyagramı Taslağı (Vize Aşaması)
+# 01 - Veritabanı ER Diyagramı
 
-Bu dosya, 3 ekip üyesinin veritabanı tablo ve sütun isimlerinde birebir aynı yapıyı kullanması için hazırlanmıştır.
+Staj Evrak Doğrulama ve Yönetim Sistemi (EF Core + SQLite).
 
-## 1. İlişki Özeti (Relationship Summary)
-* **`users` (1) ---> (N) `documents`**: Bir öğrencinin sisteme yüklediği birden fazla Ek-16 belgesi olabilir.
-* **`users` (1) ---> (N) `login_logs`**: Bir kullanıcının (veya IP'nin) birden fazla başarısız giriş denemesi loglanabilir.
-* **`admin_test_dataset`**: Admin tarafından sisteme yüklenen referans öğrenci kayıtlarını tutar. Öğrencinin yüklediği belge ve form verileri bu tablodaki kayıtlarla (TC No / Öğrenci No üzerinden) karşılaştırılır.
-
----
-
-## 2. Tablo ve Sütun Detayları
-
-### A. `users` (Kullanıcılar Tablosu)
-| Sütun Adı | Veri Tipi | Kısıtlamalar / Açıklama |
-| :--- | :--- | :--- |
-| `id` | INT / UUID | Primary Key (Auto Increment) |
-| `username` | VARCHAR(100) | Unique, Not Null |
-| `email` | VARCHAR(150) | Unique, Not Null |
-| `password_hash` | VARCHAR(255) | Not Null (Bcrypt/Argon2 ile hash'lenmiş) |
-| `role` | ENUM | `'ROLE_STUDENT'`, `'ROLE_ADMIN'` |
-| `failed_attempts` | INT | Default: `0` (5 olunca hesap kilitlenir) |
-| `is_locked` | BOOLEAN | Default: `FALSE` |
-| `created_at` | TIMESTAMP | Default: `CURRENT_TIMESTAMP` |
-
-### B. `admin_test_dataset` (Admin Test Veri Seti Tablosu)
-| Sütun Adı | Veri Tipi | Kısıtlamalar / Açıklama |
-| :--- | :--- | :--- |
-| `id` | INT / UUID | Primary Key |
-| `full_name` | VARCHAR(150) | Öğrenci Ad Soyad |
-| `tc_no` | VARCHAR(11) | T.C. Kimlik No / Yabancı Kimlik No |
-| `nationality` | VARCHAR(50) | Uyruk |
-| `student_no` | VARCHAR(20) | Öğrenci No |
-| `birth_date` | DATE | Doğum Tarihi |
-| `address` | TEXT | İkametgah Adresi (Açık Adres) |
-| `department` | VARCHAR(100) | Okuduğu Bölüm |
-| `submission_year` | VARCHAR(20) | Ek-16 Teslim Yılı (Örn: `2025-2026`) |
-| `previous_internship_days` | INT | Daha önce yapılan staj gün sayısı |
-| `email` | VARCHAR(150) | E-posta |
-| `phone` | VARCHAR(20) | Telefon No |
-| `health_insurance_status` | VARCHAR(50) | Sağlık Yardımı Statüsü |
-
-### C. `documents` (Yüklenen Ek-16 Belgeleri Tablosu)
-| Sütun Adı | Veri Tipi | Kısıtlamalar / Açıklama |
-| :--- | :--- | :--- |
-| `id` | INT / UUID | Primary Key |
-| `user_id` | INT / UUID | Foreign Key (`users.id`) |
-| `file_name` | VARCHAR(255) | Orijinal dosya adı |
-| `file_path` | VARCHAR(500) | Sunucudaki kayıt yolu |
-| `file_extension` | VARCHAR(10) | `.pdf`, `.docx`, `.doc`, `.jpeg`, `.png` |
-| `status` | ENUM | `'YUKLENDI'`, `'INCELENIYOR'`, `'HATALI_EKSIK'`, `'ONAYLANDI'`, `'TAMAMLANDI'` |
-| `parsed_data` | JSON / TEXT | `.docx`/PDF kütüphanesi ile belgeden otomatik okunan veriler |
-| `manual_form_data` | JSON / TEXT | Öğrencinin arayüz formundan manuel girdiği veriler |
-| `is_ready_for_submission` | BOOLEAN | Manuel veri, belge verisi ve test seti eşleşme sonucu |
-| `comparison_report` | TEXT | Uyuşmazlık varsa detay raporu |
-| `uploaded_at` | TIMESTAMP | Default: `CURRENT_TIMESTAMP` |
-
-### D. `login_logs` (Başarısız Giriş Logları Tablosu)
-| Sütun Adı | Veri Tipi | Kısıtlamalar / Açıklama |
-| :--- | :--- | :--- |
-| `id` | INT / UUID | Primary Key |
-| `attempted_identifier` | VARCHAR(150) | Girilmeye çalışılan kullanıcı adı / e-posta |
-| `ip_address` | VARCHAR(45) | İstek atan IP adresi |
-| `attempt_time` | TIMESTAMP | Default: `CURRENT_TIMESTAMP` |
-| `log_status` | VARCHAR(50) | `'FAILED_PASSWORD'`, `'ACCOUNT_LOCKED'` |
-
----
-
-## 3. Görsel ER Diyagramı (Mermaid)
+> Tablo adları backend'deki model sınıflarından (`BaseUser`, `Student`, `Admin`, `AdminTestDataset`, `LoginLog`, `RevokedToken`, `Document`) türetildi. Alan adları isterlere göre yazıldı, `backend/StajEvrak.Api/Models/` ile karşılaştırılıp düzeltilmelidir.
 
 ```mermaid
 erDiagram
-    USERS ||--o{ DOCUMENTS : "yukler"
-    USERS ||--o{ LOGIN_LOGS : "loglanir"
+    BASE_USER ||--o| STUDENT : "ogrenci ise"
+    BASE_USER ||--o| ADMIN : "admin ise"
+    BASE_USER ||--o{ LOGIN_LOG : "giris denemesi"
+    BASE_USER ||--o{ REVOKED_TOKEN : "cikista iptal"
+    STUDENT ||--o{ DOCUMENT : "yukler"
+    ADMIN ||--o{ ADMIN_TEST_DATASET : "yukler"
 
-    USERS {
+    BASE_USER {
         int id PK
-        string username
-        string email
+        string username UK
+        string email UK
         string password_hash
-        string role
+        string role "ROLE_STUDENT | ROLE_ADMIN"
         int failed_attempts
-        boolean is_locked
-        datetime created_at
+        datetime locked_until
     }
 
-    DOCUMENTS {
+    STUDENT {
         int id PK
-        int user_id FK
-        string file_name
-        string file_path
-        string file_extension
-        string status
-        json parsed_data
-        json manual_form_data
-        boolean is_ready_for_submission
-        datetime uploaded_at
+        string student_no UK
+        string tc_no UK
+    }
+
+    ADMIN {
+        int id PK
     }
 
     ADMIN_TEST_DATASET {
         int id PK
-        string full_name
+        string ad_soyad
         string tc_no
-        string nationality
-        string student_no
-        date birth_date
-        string address
-        string department
-        string submission_year
-        int previous_internship_days
+        string uyruk
+        string ogrenci_no
+        date dogum_tarihi
+        string adres
+        string bolum
+        int teslim_yili
+        int eski_staj_gun
         string email
-        string phone
-        string health_insurance_status
+        string telefon
+        string saglik_yardimi
     }
 
-    LOGIN_LOGS {
+    DOCUMENT {
         int id PK
-        string attempted_identifier
-        string ip_address
-        datetime attempt_time
-        string log_status
+        int student_id FK
+        string file_name
+        string file_path
+        string status "Yuklendi | Inceleniyor | Hatali | Onaylandi | Tamamlandi"
+        string form_data "ogrencinin girdigi Ek-16 bilgileri"
+        string comparison_result "karsilastirma ve teslime hazir mi"
+        datetime uploaded_at
+    }
+
+    LOGIN_LOG {
+        int id PK
+        int user_id FK
+        boolean success
+        datetime attempted_at
+    }
+
+    REVOKED_TOKEN {
+        int id PK
+        int user_id FK
+        string token_id
+        datetime expires_at
     }
 ```
+
+## Açıklamalar
+
+- **BASE_USER:** Öğrenci ve admin ortak tablosu. `role` alanı JWT içinde taşınır. `failed_attempts` 5 olunca hesap kilitlenir.
+- **STUDENT / ADMIN:** Role özel bilgiler. Kalıtım yapısı sınıf diyagramında.
+- **ADMIN_TEST_DATASET:** Adminin yüklediği CSV/Excel verisi. Belgedeki bilgilerle `ogrenci_no` / `tc_no` üzerinden eşleştirilir (yabancı anahtar yok, eşleştirme servis katmanında).
+- **DOCUMENT:** Durum akışı Yüklendi, İnceleniyor, Hatalı/Eksik, Onaylandı, Tamamlandı.
+- **LOGIN_LOG:** Başarısız girişler loglanır.
+- **REVOKED_TOKEN:** Çıkış yapılınca token geçersiz kılınır.

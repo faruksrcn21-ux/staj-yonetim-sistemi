@@ -1,51 +1,54 @@
-# UML Use Case (Kullanım Senaryosu) Diyagramı Taslağı
+# 04 - UML Use Case Diyagramı
 
-Bu diyagram, sistemdeki aktörlerin (`Öğrenci`, `Admin`) vize aşamasında sistemle kurduğu etkileşimleri ve yetki sınırlarını tanımlar.
-
-## 1. Aktörler ve Kullanım Senaryoları
-
-### Aktör: Öğrenci (`ROLE_STUDENT`)
-* **UC-01 Kayıt Olma:** Kendi kullanıcı adı, e-posta ve şifresini belirleyerek sisteme kaydolur.
-* **UC-02 Giriş / Çıkış Yapma:** Kimlik bilgileriyle oturum açar, çıkışta oturumunu sonlandırır.
-* **UC-03 Ek-16 Belgesi Yükleme:** Belirtilen uzantılarda (`.doc`, `.docx`, `.pdf`, `.jpeg`, `.png`) belge yükler.
-* **UC-04 Manuel Bilgi Girişi:** Yüklediği belgedeki alanları arayüz formuna manuel olarak girer.
-* **UC-05 Karşılaştırma Raporu Görüntüleme:** Belgeden okunan veri ile manuel girdiği verinin eşleşme durumunu görür. *(Not: "Tamamlandı" statüsündeki belgeleri güncelleyemez ve silemez).*
-
-### Aktör: Admin (`ROLE_ADMIN`)
-* **UC-02 Giriş / Çıkış Yapma:** Admin yetkisiyle oturum açar.
-* **UC-06 Test Veri Seti Yükleme:** Öğrenci doğrulaması için gerekli 12 sütunlu test veri setini sisteme aktarır.
-* **UC-07 Başvuruları Görüntüleme:** Sisteme yüklenen tüm belgeleri ve durumlarını listeler.
-* **UC-08 Tamamlandı Belge Güncelleme / Silme:** "Tamamlandı" statüsündeki belgeler üzerinde güncelleme ve silme işlemlerini gerçekleştirir.
-
----
-
-## 2. Görsel Use Case Diyagramı (Mermaid)
+> Mermaid'de doğrudan use case diyagramı yoktur, bu yüzden `flowchart` ile çizildi: yuvarlak kutular aktörleri, oval şekiller kullanım senaryolarını, kesikli oklar `include` / `extend` ilişkilerini gösterir.
 
 ```mermaid
 flowchart LR
-    Student([Öğrenci<br/>ROLE_STUDENT])
-    Admin([Admin<br/>ROLE_ADMIN])
+    Ogrenci(["Öğrenci"])
+    Admin(["Admin"])
 
-    subgraph Sistem [Staj Evrak Doğrulama Sistemi - Vize Kapsamı]
-        UC1(Kayıt Olma)
-        UC2(Giriş / Çıkış Yapma)
-        UC3(Ek-16 Belgesi Yükleme & Format Kontrolü)
-        UC4(Arayüz Formundan Manuel Veri Girişi)
-        UC5(Belge & Form Karşılaştırma Sonucu Görüntüleme)
-        UC6(Test Veri Seti Yükleme)
-        UC7(Tamamlandı Belgeleri Görüntüleme)
-        UC8(Tamamlandı Belgeleri Güncelleme ve Silme)
+    subgraph SISTEM ["Staj Evrak Doğrulama ve Yönetim Sistemi"]
+        UC1(("Kayıt ol"))
+        UC2(("Giriş yap"))
+        UC3(("Çıkış yap"))
+        UC4(("Evrak yükle"))
+        UC5(("Ek-16 bilgilerini gir"))
+        UC6(("Dosya formatını kontrol et"))
+        UC7(("Belge verisini karşılaştır"))
+        UC8(("Karşılaştırma sonucunu gör"))
+        UC9(("Belgeyi düzelt veya sil"))
+        UC10(("Test veri setini yükle"))
+        UC11(("Belgeleri listele"))
+        UC12(("Belge durumunu güncelle"))
+        UC13(("Belgeyi sil"))
     end
 
-    Student --> UC1
-    Student --> UC2
-    Student --> UC3
-    Student --> UC4
-    Student --> UC5
-    UC3 -.->|include| UC4
+    Ogrenci --- UC1
+    Ogrenci --- UC2
+    Ogrenci --- UC3
+    Ogrenci --- UC4
+    Ogrenci --- UC8
+    Ogrenci --- UC9
 
-    Admin --> UC2
-    Admin --> UC6
-    Admin --> UC7
-    Admin --> UC8
+    Admin --- UC2
+    Admin --- UC3
+    Admin --- UC10
+    Admin --- UC11
+    Admin --- UC12
+    Admin --- UC13
+
+    UC4 -.->|include| UC5
+    UC4 -.->|include| UC6
+    UC4 -.->|include| UC7
+    UC9 -.->|extend: Tamamlandı değilse| UC4
 ```
+
+## Aktörler
+
+- **Öğrenci:** Kendi hesabını oluşturur, Ek-16 evrakını yükler, bilgilerini elle girer, karşılaştırma sonucunu ve teslime hazır durumunu görür.
+- **Admin:** Test veri setini yükler, tüm belgeleri listeler, durumu günceller, belgeyi siler. Tamamlanan belgeleri de değiştirebilir.
+
+## İlişkiler
+
+- **Evrak yükle (include):** Bilgi girme, format kontrolü ve karşılaştırma yüklemenin parçasıdır.
+- **Belgeyi düzelt veya sil (extend):** Sadece belge "Tamamlandı" değilse yapılabilir.
