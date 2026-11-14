@@ -19,6 +19,7 @@ public class AppDbContext : DbContext
     public DbSet<LoginLog> LoginLogs => Set<LoginLog>();
     public DbSet<RevokedToken> RevokedTokens => Set<RevokedToken>();
     public DbSet<AdminTestDataset> AdminTestDataset => Set<AdminTestDataset>();
+    public DbSet<Document> Documents => Set<Document>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -98,6 +99,30 @@ public class AppDbContext : DbContext
             e.Property(d => d.Email).HasColumnName("email").HasMaxLength(150);
             e.Property(d => d.Phone).HasColumnName("phone").HasMaxLength(20);
             e.Property(d => d.HealthInsuranceStatus).HasColumnName("health_insurance_status").HasMaxLength(50);
+        });
+
+        // ---- documents ----
+        modelBuilder.Entity<Document>(e =>
+        {
+            e.ToTable("documents");
+            e.HasKey(d => d.Id);
+            e.Property(d => d.Id).HasColumnName("id");
+            e.Property(d => d.UserId).HasColumnName("user_id");
+            e.Property(d => d.FileName).HasColumnName("file_name").HasMaxLength(255).IsRequired();
+            e.Property(d => d.FilePath).HasColumnName("file_path").HasMaxLength(500).IsRequired();
+            e.Property(d => d.FileExtension).HasColumnName("file_extension").HasMaxLength(10).IsRequired();
+            e.Property(d => d.Status).HasColumnName("status").HasMaxLength(20).IsRequired();
+            e.Property(d => d.ParsedData).HasColumnName("parsed_data");
+            e.Property(d => d.ManualFormData).HasColumnName("manual_form_data");
+            e.Property(d => d.IsReadyForSubmission).HasColumnName("is_ready_for_submission");
+            e.Property(d => d.ComparisonReport).HasColumnName("comparison_report");
+            e.Property(d => d.UploadedAt).HasColumnName("uploaded_at");
+
+            // ER: users (1) ---> (N) documents. Kullanıcı silinirse belgeleri de silinir.
+            e.HasOne(d => d.User).WithMany().HasForeignKey(d => d.UserId).OnDelete(DeleteBehavior.Cascade);
+
+            // Admin ekranı belgeleri statüye göre listeleyeceği için (ör. "Tamamlandı" sekmesi).
+            e.HasIndex(d => d.Status);
         });
 
         // ---- Tarih/saat ----
