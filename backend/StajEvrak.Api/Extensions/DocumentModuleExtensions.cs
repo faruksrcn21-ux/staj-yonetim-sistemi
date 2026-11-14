@@ -1,3 +1,4 @@
+using StajEvrak.Api.Comparison;
 using StajEvrak.Api.Parsing;
 using StajEvrak.Api.Repositories;
 using StajEvrak.Api.Services;
@@ -14,6 +15,9 @@ public static class DocumentModuleExtensions
         services.AddScoped<IDocumentParser, ImageDocumentParser>();
         services.AddScoped<IDocumentParser, LegacyWordDocumentParser>();
         services.AddScoped<DocumentParserFactory>();
+
+        services.AddScoped<Ek16FieldExtractor>();
+        services.AddScoped<DocumentComparisonService>();
 
         services.AddScoped<UploadedFileValidator>();
         services.AddSingleton<IDocumentFileStore, LocalDocumentFileStore>();
