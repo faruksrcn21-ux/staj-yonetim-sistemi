@@ -29,6 +29,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtTokenService>();
+builder.Services.AddScoped<DocumentService>();
 
 // ---- JWT ayarları ----
 var jwtSection = builder.Configuration.GetSection(JwtOptions.SectionName);
