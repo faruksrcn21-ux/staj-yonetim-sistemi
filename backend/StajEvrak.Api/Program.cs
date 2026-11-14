@@ -29,6 +29,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtTokenService>();
+builder.Services.AddScoped<DocumentService>();
+builder.Services.AddScoped<StudentDatasetMatcher>();
 
 // ---- JWT ayarları ----
 var jwtSection = builder.Configuration.GetSection(JwtOptions.SectionName);
@@ -96,6 +98,23 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+// ---- CORS ----
+// Frontend tarayıcıda farklı bir adresten (ör. VS Code Live Server: http://127.0.0.1:5500)
+// çalıştığı için, tarayıcı API'ye istek atmadan önce izin sorar. Sadece bu bilgisayardaki
+// (localhost / 127.0.0.1) adreslere izin verilir. HTML dosyası çift tıklanarak açılırsa
+// tarayıcı adresi "null" gönderir; buna sadece geliştirme ortamında izin verilir.
+const string FrontendCorsPolicy = "Frontend";
+var allowNullOrigin = builder.Environment.IsDevelopment();
+
+builder.Services.AddCors(options => options.AddPolicy(FrontendCorsPolicy, policy => policy
+    .SetIsOriginAllowed(origin =>
+        origin == "null"
+            ? allowNullOrigin
+            : Uri.TryCreate(origin, UriKind.Absolute, out var uri)
+              && (uri.Host == "localhost" || uri.Host == "127.0.0.1"))
+    .AllowAnyHeader()
+    .AllowAnyMethod()));
+
 var app = builder.Build();
 
 // Uygulama açılırken:
@@ -122,6 +141,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors(FrontendCorsPolicy); // 0) Tarayıcıdan gelen isteğe izin ver (yetki kontrolünden ÖNCE olmalı)
 app.UseAuthentication(); // 1) Token'ı oku ve doğrula: "Bu kim?"
 app.UseAuthorization();  // 2) Rolü kontrol et: "Buna yetkisi var mı?"
 app.MapControllers();

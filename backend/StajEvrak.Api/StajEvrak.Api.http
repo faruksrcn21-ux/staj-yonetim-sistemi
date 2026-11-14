@@ -114,4 +114,48 @@ Authorization: Bearer {{adminToken}}
 GET {{host}}/api/role-check/student
 Authorization: Bearer {{adminToken}}
 
+# ------------------------------------------------------------------
+# BELGELER (statü akışı + "Tamamlandı" yetkisi, hoca Bölüm 5 ve S3)
+# Not: Belge yükleme endpoint'i 2. geliştiricide. Önce bir belge yüklenmeli;
+# aşağıdaki {{docId}} yerine o belgenin id'sini yazın.
+# ------------------------------------------------------------------
+@docId = 1
+
+### 16) Öğrenci kendi belgelerini listeler -> 200
+GET {{host}}/api/documents
+Authorization: Bearer {{token}}
+
+### 17) Tek belge (öğrenci: sadece kendi -> başkasınınki 403)
+GET {{host}}/api/documents/{{docId}}
+Authorization: Bearer {{token}}
+
+### 18) Admin tüm belgeleri listeler (?status=TAMAMLANDI -> "Tamamlandı" sekmesi)
+GET {{host}}/api/admin/documents
+Authorization: Bearer {{adminToken}}
+
+### 19) Admin belgeyi incelemeye alır: Yüklendi -> İnceleniyor
+POST {{host}}/api/admin/documents/{{docId}}/review
+Authorization: Bearer {{adminToken}}
+
+### 20) Admin Hatalı/Eksik işaretler: İnceleniyor -> Hatalı/Eksik
+POST {{host}}/api/admin/documents/{{docId}}/mark-defective
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "reason": "İşveren imzası eksik."
+}
+
+### 21) Admin onaylar: İnceleniyor -> Onaylandı -> Tamamlandı (otomatik)
+POST {{host}}/api/admin/documents/{{docId}}/approve
+Authorization: Bearer {{adminToken}}
+
+### 22) Öğrenci "Tamamlandı" belgeyi silmeye çalışır -> 403 (S3)
+DELETE {{host}}/api/documents/{{docId}}
+Authorization: Bearer {{token}}
+
+### 23) Admin "Tamamlandı" belgeyi silebilir -> 204 (S3)
+DELETE {{host}}/api/documents/{{docId}}
+Authorization: Bearer {{adminToken}}
+
 ###

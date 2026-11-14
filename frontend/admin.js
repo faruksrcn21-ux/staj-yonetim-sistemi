@@ -1,6 +1,10 @@
 /* Admin ekranı - sadece admin.html'de çalışır (app.js önce yüklenmeli) */
 (function () {
+<<<<<<< HEAD
   const user = Session.require(ROLE_ADMIN);
+=======
+  const user = Session.require([ROLES.ADMIN]);
+>>>>>>> origin/main
   if (!user) return;
 
   const $ = id => document.getElementById(id);
@@ -11,10 +15,39 @@
   $("logout-btn").addEventListener("click", () => Session.logout());
   statusSel.innerHTML = STATUSES.map(s => '<option value="' + s + '">' + esc(STATUS_LABEL[s]) + "</option>").join("");
 
+<<<<<<< HEAD
   /* ---- Sekmeler ---- */
   document.querySelectorAll(".tab[data-tab]").forEach(t => t.addEventListener("click", () => {
     document.querySelectorAll(".tab[data-tab]").forEach(x => {
       x.classList.toggle("is-active", x === t);
+=======
+  let applications = [];
+  let current = null; // incelenen başvuru
+
+  document.getElementById("user-name").textContent = user.username;
+  document.getElementById("logout-btn").addEventListener("click", () => Session.logout());
+
+  /* ---- Özet sayaçları ---- */
+  function renderStats() {
+    const count = s => applications.filter(a => a.status === s).length;
+    const items = [
+      ["Toplam", applications.length],
+      ["Beklemede", count("pending")],
+      ["Onaylandı", count("approved")],
+      ["Reddedildi", count("rejected")]
+    ];
+    statsEl.innerHTML = items.map(([label, n]) => '<div class="stat"><b>' + n + "</b><span>" + label + "</span></div>").join("");
+  }
+
+  /* ---- Tablo ---- */
+  function filtered() {
+    const q = searchEl.value.trim().toLocaleLowerCase("tr");
+    const st = filterEl.value;
+    return applications.filter(a => {
+      if (st !== "all" && a.status !== st) return false;
+      if (!q) return true;
+      return [a.studentName, a.studentNo, a.company].join(" ").toLocaleLowerCase("tr").includes(q);
+>>>>>>> origin/main
     });
     document.querySelectorAll(".tab-section").forEach(s => { s.hidden = s.id !== "tab-" + t.dataset.tab; });
   }));
