@@ -1,53 +1,19 @@
 /* Admin ekranı - sadece admin.html'de çalışır (app.js önce yüklenmeli) */
 (function () {
-<<<<<<< HEAD
-  const user = Session.require(ROLE_ADMIN);
-=======
-  const user = Session.require([ROLES.ADMIN]);
->>>>>>> origin/main
+  const user = Session.require(ROLE_ADMIN); // rol uymazsa login'e (hoca: yetkisiz -> 403 + login)
   if (!user) return;
 
   const $ = id => document.getElementById(id);
   const dlg = $("review-dialog"), dlgMsg = $("dlg-message"), statusSel = $("status-select");
   let docs = [], current = null;
 
-  $("user-name").textContent = user.fullName;
+  $("user-name").textContent = user.username;
   $("logout-btn").addEventListener("click", () => Session.logout());
-  statusSel.innerHTML = STATUSES.map(s => '<option value="' + s + '">' + esc(STATUS_LABEL[s]) + "</option>").join("");
 
-<<<<<<< HEAD
   /* ---- Sekmeler ---- */
   document.querySelectorAll(".tab[data-tab]").forEach(t => t.addEventListener("click", () => {
     document.querySelectorAll(".tab[data-tab]").forEach(x => {
       x.classList.toggle("is-active", x === t);
-=======
-  let applications = [];
-  let current = null; // incelenen başvuru
-
-  document.getElementById("user-name").textContent = user.username;
-  document.getElementById("logout-btn").addEventListener("click", () => Session.logout());
-
-  /* ---- Özet sayaçları ---- */
-  function renderStats() {
-    const count = s => applications.filter(a => a.status === s).length;
-    const items = [
-      ["Toplam", applications.length],
-      ["Beklemede", count("pending")],
-      ["Onaylandı", count("approved")],
-      ["Reddedildi", count("rejected")]
-    ];
-    statsEl.innerHTML = items.map(([label, n]) => '<div class="stat"><b>' + n + "</b><span>" + label + "</span></div>").join("");
-  }
-
-  /* ---- Tablo ---- */
-  function filtered() {
-    const q = searchEl.value.trim().toLocaleLowerCase("tr");
-    const st = filterEl.value;
-    return applications.filter(a => {
-      if (st !== "all" && a.status !== st) return false;
-      if (!q) return true;
-      return [a.studentName, a.studentNo, a.company].join(" ").toLocaleLowerCase("tr").includes(q);
->>>>>>> origin/main
     });
     document.querySelectorAll(".tab-section").forEach(s => { s.hidden = s.id !== "tab-" + t.dataset.tab; });
   }));
@@ -85,16 +51,33 @@
     $("dlg-info").innerHTML = "<dt>Öğrenci</dt><dd>" + esc(d.studentName) + "</dd><dt>Dosya</dt><dd>" + esc(d.fileName) + "</dd>" +
       FIELDS.map(([k, label]) => "<dt>" + esc(label) + "</dt><dd>" + esc((d.data || {})[k]) + "</dd>").join("");
     $("dlg-cmp").innerHTML = cmpHtml(d.comparison);
-    statusSel.value = d.status;
-    showDlgMessage("");
+
+    // Sadece akışa uygun işlemler listelenir (Yüklendi -> İnceleniyor -> Tamamlandı / Hatalı-Eksik)
+    const next = NEXT_STATUSES[d.status] || [];
+    statusSel.innerHTML = '<option value="">Şu an: ' + esc(STATUS_LABEL[d.status] || d.status) + "</option>" +
+      next.map(s => '<option value="' + s + '">' + esc(ACTION_LABEL[s]) + "</option>").join("");
+    statusSel.disabled = next.length === 0;
+    $("dlg-save").disabled = next.length === 0;
+
+    showDlgMessage(next.length ? "" : (d.status === "faulty"
+      ? "Öğrencinin belgeyi düzeltip yeniden yüklemesi bekleniyor."
+      : "Bu belgede durum değişikliği yapılamaz."));
+    if (!next.length) dlgMsg.className = "message";
     dlg.showModal();
   }
 
   $("dlg-close").addEventListener("click", () => dlg.close());
 
   $("dlg-save").addEventListener("click", async () => {
+    const status = statusSel.value;
+    if (!status) return showDlgMessage("Bir işlem seç.");
+    let reason;
+    if (status === "faulty") {
+      reason = prompt("Hatalı / Eksik sebebi (öğrenci bu notu görecek):");
+      if (reason === null) return; // vazgeçti
+    }
     try {
-      await api.updateDocumentStatus(current.id, statusSel.value);
+      await api.updateDocumentStatus(current.id, status, reason);
       dlg.close(); toast("Durum güncellendi."); loadDocs();
     } catch (err) { showDlgMessage(err.message); }
   });
