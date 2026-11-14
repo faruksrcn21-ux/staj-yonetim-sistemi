@@ -68,6 +68,10 @@
 
   $("dlg-close").addEventListener("click", () => dlg.close());
 
+  $("dlg-file").addEventListener("click", async () => {
+    try { await api.openDocumentFile(current.id, current.fileName); } catch (err) { showDlgMessage(err.message); }
+  });
+
   $("dlg-save").addEventListener("click", async () => {
     const status = statusSel.value;
     if (!status) return showDlgMessage("Bir işlem seç.");

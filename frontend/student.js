@@ -12,8 +12,14 @@
   $("logout-btn").addEventListener("click", () => Session.logout());
 
   // Ek-16 bilgilerini elle girme formu
-  $("fields").innerHTML = FIELDS.map(([k, label, type]) =>
-    '<div class="field"><label for="f_' + k + '">' + esc(label) + '</label><input id="f_' + k + '" name="' + k + '" type="' + type + '"></div>'
+  function fieldInput(k, type, hint) {
+    if (type === "select") // sağlık yardım statüsü: Ek-16'daki 6 seçenek
+      return '<select id="f_' + k + '" name="' + k + '"><option value="">Seçiniz</option>' +
+        SAGLIK_SECENEKLERI.map((s, i) => '<option value="' + esc(s) + '">' + (i + 1) + "- " + esc(s) + "</option>").join("") + "</select>";
+    return '<input id="f_' + k + '" name="' + k + '" type="' + type + '"' + (hint ? ' placeholder="' + esc(hint) + '"' : "") + ">";
+  }
+  $("fields").innerHTML = FIELDS.map(([k, label, type, hint]) =>
+    '<div class="field"><label for="f_' + k + '">' + esc(label) + "</label>" + fieldInput(k, type, hint) + "</div>"
   ).join("");
 
   function showMessage(text) { msg.textContent = text; msg.className = "message is-error"; msg.hidden = !text; }

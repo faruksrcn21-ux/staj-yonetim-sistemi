@@ -1,3 +1,4 @@
+using StajEvrak.Api.Comparison;
 using StajEvrak.Api.Dtos;
 using StajEvrak.Api.Models;
 using StajEvrak.Api.Parsing;
@@ -15,7 +16,7 @@ public sealed record UploadResult(
     public static UploadResult Denied(DocumentOperationResult access) => new(null, null, null, access);
 }
 
-// Akış: format kontrolü → dosyayı kaydet → kaydı oluştur → belgeyi oku.
+// Akış: format kontrolü → dosyayı kaydet → kaydı oluştur → belgeyi oku → karşılaştır.
 public class DocumentUploadService
 {
     private readonly UploadedFileValidator _validator;
@@ -23,16 +24,18 @@ public class DocumentUploadService
     private readonly IDocumentRepository _repository;
     private readonly DocumentParserFactory _parsers;
     private readonly DocumentService _documents;
+    private readonly DocumentComparisonService _comparison;
 
     public DocumentUploadService(
         UploadedFileValidator validator, IDocumentFileStore store, IDocumentRepository repository,
-        DocumentParserFactory parsers, DocumentService documents)
+        DocumentParserFactory parsers, DocumentService documents, DocumentComparisonService comparison)
     {
         _validator = validator;
         _store = store;
         _repository = repository;
         _parsers = parsers;
         _documents = documents;
+        _comparison = comparison;
     }
 
     public async Task<UploadResult> UploadAsync(
@@ -57,7 +60,7 @@ public class DocumentUploadService
             throw;
         }
 
-        return UploadResult.Success(document, Summarize(path, validation.Extension));
+        return UploadResult.Success(document, await CheckAsync(document));
     }
 
     // Belge tekrar Yüklendi olur, eski dosya silinir.
@@ -81,13 +84,17 @@ public class DocumentUploadService
         await _repository.SaveChangesAsync();
 
         _store.Delete(oldPath);
-        return UploadResult.Success(document, Summarize(newPath, validation.Extension));
+        return UploadResult.Success(document, await CheckAsync(document));
     }
 
-    private ParseSummary Summarize(string path, string extension)
+    private async Task<ParseSummary> CheckAsync(Document document)
     {
         // Çok biçimlilik: hangi parser seçilirse seçilsin burada sadece Parse() çağrılır.
-        var parsed = _parsers.Select(extension).Parse(path);
+        var parsed = _parsers.Select(document.FileExtension).Parse(document.FilePath);
+
+        await _comparison.CompareAndRecordAsync(document, parsed);
+        await _repository.SaveChangesAsync();
+
         return ParseSummary.From(parsed);
     }
 }

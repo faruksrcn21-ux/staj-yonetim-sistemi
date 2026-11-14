@@ -2,7 +2,7 @@
 
 /* ---------- 1) CONFIG + sabitler ---------- */
 const CONFIG = {
-  USE_MOCK: true, // true: sahte veri, false: gerçek backend
+  USE_MOCK: false, // true: sahte veri (backend olmadan), false: gerçek backend
   API_BASE: "http://localhost:5062/api",  // backend: backend/StajEvrak.Api -> "dotnet run"
   MOCK_DELAY: 300
 };
@@ -35,14 +35,25 @@ const NEXT_STATUSES = {
 };
 const ACTION_LABEL = { reviewing: "İncelemeye al", completed: "Onayla (Tamamlandı)", faulty: "Hatalı / Eksik olarak işaretle" };
 
-// [anahtar, etiket, input tipi]. İlk 12 alan test veri setinin sütunlarıdır.
+// Ek-16'daki "Sağlık yardım statüsü" seçenekleri (25 yaş ve üstü öğrenciler 6. seçeneği işaretler)
+const SAGLIK_SECENEKLERI = [
+  "Genel Sağlık sigortası kapsamındayım",
+  "Anne-Baba üzerinden sağlık yardımı almaktayım",
+  "Sosyal Sigortalar Kurumu'na tabi olarak çalıştığımdan kendi sağlık yardımım var",
+  "Bağ-Kur'a tabi olarak çalıştığımdan kendi sağlık yardımım var",
+  "Emekli Sandığı'na tabi olarak çalıştığımdan kendi sağlık yardımım var",
+  "Herhangi bir sosyal güvencem olmadığından sağlık yardımı alamıyorum"
+];
+
+// [anahtar, etiket, input tipi, örnek]. İlk 12 alan test veri setinin sütunlarıdır.
+// Etiketler Ek-16'daki yazılışlara göredir; öğrenci belgesine yazdığını aynen girer.
 const FIELDS = [
-  ["adSoyad", "Ad soyad", "text"], ["tcNo", "TC kimlik no", "text"],
-  ["uyruk", "Uyruk", "text"], ["ogrenciNo", "Öğrenci no", "text"],
-  ["dogumTarihi", "Doğum tarihi", "date"], ["adres", "Adres", "text"],
-  ["bolum", "Bölüm", "text"], ["teslimYili", "Ek-16 teslim yılı", "text"],
-  ["eskiStajGun", "Önceki staj gün sayısı", "number"], ["email", "E-posta", "email"],
-  ["telefon", "Telefon no", "tel"], ["saglikYardimi", "Sağlık yardımı statüsü", "text"],
+  ["adSoyad", "Adı soyadı", "text"], ["tcNo", "T.C. kimlik no", "text", "Yabancıysa 99 ile başlar"],
+  ["uyruk", "Uyruğu", "text", "T.C. veya ülke adı"], ["ogrenciNo", "Öğrenci numarası", "text"],
+  ["dogumTarihi", "Doğum tarihi", "date"], ["adres", "İkametgâh adresi", "text", "Mah., sokak, no, daire, ilçe/il"],
+  ["bolum", "Bölümü", "text", "Örn. Yazılım Mühendisliği"], ["teslimYili", "Öğretim yılı", "text", "Örn. 2025-2026"],
+  ["eskiStajGun", "Daha önce yaptığı staj gün sayısı", "number", "Örn. 0"], ["email", "E-posta adresi", "email"],
+  ["telefon", "Telefon no", "tel", "+90 5xx xxx xx xx"], ["saglikYardimi", "Sağlık yardım statüsü", "select"],
   ["stajBaslangic", "Staj başlangıç tarihi", "date"], ["stajBitis", "Staj bitiş tarihi", "date"]
 ];
 const DATASET_KEYS = FIELDS.slice(0, 12).map(f => f[0]);
@@ -55,12 +66,12 @@ const MOCK_SEED = {
     { id: 2, role: ROLE_ADMIN, username: "admin", email: "admin@kocaeli.edu.tr", password: "123456" }
   ],
   dataset: [
-    { adSoyad: "Ayşe Yılmaz", tcNo: "11111111111", uyruk: "T.C.", ogrenciNo: "210201001", dogumTarihi: "2003-04-12", adres: "İzmit / Kocaeli", bolum: "Yazılım Mühendisliği", teslimYili: "2025", eskiStajGun: "0", email: "ogrenci@kocaeli.edu.tr", telefon: "5550000001", saglikYardimi: "Var" },
-    { adSoyad: "Can Demir", tcNo: "22222222222", uyruk: "T.C.", ogrenciNo: "210201014", dogumTarihi: "2002-09-30", adres: "Gebze / Kocaeli", bolum: "Bilgisayar Mühendisliği", teslimYili: "2026", eskiStajGun: "20", email: "can@kocaeli.edu.tr", telefon: "5550000002", saglikYardimi: "Yok" }
+    { adSoyad: "Ayşe Yılmaz", tcNo: "11111111111", uyruk: "T.C.", ogrenciNo: "210201001", dogumTarihi: "2003-04-12", adres: "İzmit / Kocaeli", bolum: "Yazılım Mühendisliği", teslimYili: "2025-2026", eskiStajGun: "0", email: "ogrenci@kocaeli.edu.tr", telefon: "+90 555 000 00 01", saglikYardimi: "Anne-Baba üzerinden sağlık yardımı almaktayım" },
+    { adSoyad: "Can Demir", tcNo: "22222222222", uyruk: "T.C.", ogrenciNo: "210201014", dogumTarihi: "2002-09-30", adres: "Gebze / Kocaeli", bolum: "Bilgisayar Mühendisliği", teslimYili: "2025-2026", eskiStajGun: "20", email: "can@kocaeli.edu.tr", telefon: "+90 555 000 00 02", saglikYardimi: "Genel Sağlık sigortası kapsamındayım" }
   ],
   documents: [
     { id: 101, userId: 9, studentName: "Can Demir", studentNo: "210201014", fileName: "ek16_can.pdf", uploadedAt: "2026-11-10T09:30:00", status: "completed",
-      data: { adSoyad: "Can Demir", tcNo: "22222222222", uyruk: "T.C.", ogrenciNo: "210201014", dogumTarihi: "2002-09-30", adres: "Gebze / Kocaeli", bolum: "Bilgisayar Mühendisliği", teslimYili: "2026", eskiStajGun: "20", email: "can@kocaeli.edu.tr", telefon: "5550000002", saglikYardimi: "Yok", stajBaslangic: "", stajBitis: "" },
+      data: { adSoyad: "Can Demir", tcNo: "22222222222", uyruk: "T.C.", ogrenciNo: "210201014", dogumTarihi: "2002-09-30", adres: "Gebze / Kocaeli", bolum: "Bilgisayar Mühendisliği", teslimYili: "2025-2026", eskiStajGun: "20", email: "can@kocaeli.edu.tr", telefon: "+90 555 000 00 02", saglikYardimi: "Genel Sağlık sigortası kapsamındayım", stajBaslangic: "", stajBitis: "" },
       comparison: { ready: true, note: "", mismatches: [] } }
   ],
   failed: {}, locked: {}
@@ -85,7 +96,7 @@ function mockCompare(entered, extracted) {
   if (!extracted) return { ready: false, note: "Test veri setinde bu öğrenciye ait kayıt yok.", mismatches: [] };
   const mismatches = DATASET_KEYS
     .filter(k => norm(entered[k]) !== norm(extracted[k]))
-    .map(k => ({ field: k, entered: entered[k], found: extracted[k] }));
+    .map(k => ({ field: k, entered: entered[k], found: extracted[k], source: "veri seti" }));
   return { ready: mismatches.length === 0, note: "", mismatches };
 }
 
@@ -233,6 +244,29 @@ const api = {
     return doc;
   },
 
+  // GET /documents/:id/file -> yüklenen dosyanın kendisi; yeni sekmede açılır
+  async openDocumentFile(id, fileName) {
+    if (CONFIG.USE_MOCK) throw new Error("Sahte veri modunda dosya saklanmaz.");
+    const tab = window.open("", "_blank"); // tıklama anında açılır, yoksa tarayıcı engeller
+    try {
+      const res = await fetch(CONFIG.API_BASE + "/documents/" + id + "/file", { headers: { Authorization: "Bearer " + Session.token() } });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 403 && data.redirectTo) { Session.clear(); window.location.href = "index.html?reason=forbidden"; }
+        throw new Error(errorText(data, res.status));
+      }
+      const url = URL.createObjectURL(await res.blob());
+      if (tab) { tab.location.href = url; return; }
+      // Tarayıcı yeni sekmeyi engellediyse dosya indirilir.
+      const a = document.createElement("a");
+      a.href = url; a.download = fileName || "belge";
+      document.body.appendChild(a); a.click(); a.remove();
+    } catch (err) {
+      if (tab) tab.close();
+      throw err;
+    }
+  },
+
   // DELETE /documents/:id  (öğrenci: Tamamlandı ise 403; admin: her zaman)
   async deleteDocument(id) {
     if (!CONFIG.USE_MOCK) return http("/documents/" + id, { method: "DELETE" });
@@ -324,13 +358,16 @@ function toast(text, type) {
 // Karşılaştırma sonucu: teslime hazır mı, değilse hangi alanlar uyuşmuyor
 function cmpHtml(c) {
   if (!c) return "";
+  const note = c.note ? '<p class="note">' + esc(c.note) + "</p>" : "";
   if (c.ready) return '<p class="ready">' + (c.byAdmin
     ? "Teslime hazır: belge admin tarafından onaylandı."
-    : "Teslime hazır: belgedeki bilgiler girdiklerinle uyuşuyor.") + "</p>";
-  let html = '<p class="not-ready">Teslime hazır değil.' + (c.note ? " " + esc(c.note) : "") + "</p>";
+    : "Teslime hazır: girilen bilgiler belgeyle ve veri setiyle uyuşuyor.") + "</p>" + note;
+  let html = '<p class="not-ready">Teslime hazır değil.</p>' + note;
   if (c.mismatches && c.mismatches.length) {
-    html += '<div class="table-wrap"><table class="cmp"><thead><tr><th>Alan</th><th>Girilen</th><th>Belgeden okunan</th></tr></thead><tbody>' +
-      c.mismatches.map(m => "<tr><td>" + esc(fieldLabel(m.field)) + "</td><td>" + esc(m.entered) + "</td><td>" + esc(m.found) + "</td></tr>").join("") +
+    // Kaynak: uyuşmazlığın belgeden okunan bilgiyle mi, test veri setiyle mi olduğu
+    html += '<div class="table-wrap"><table class="cmp"><thead><tr><th>Alan</th><th>Girilen</th><th>Bulunan</th><th>Kaynak</th></tr></thead><tbody>' +
+      c.mismatches.map(m => "<tr><td>" + esc(m.label || fieldLabel(m.field)) + "</td><td>" + esc(m.entered) + "</td><td>" +
+        esc(m.found) + "</td><td>" + esc(m.source === "belge" ? "Belge" : "Veri seti") + "</td></tr>").join("") +
       "</tbody></table></div>";
   }
   return html;

@@ -5,8 +5,12 @@ namespace StajEvrak.Api.Parsing;
 
 // Ek-16 tablo tabanlı olduğu için hem satırlar hem tablo hücreleri okunur.
 // İşaretli onay kutusu metinde ☒, boş olan ☐ olarak gelir.
+// Hücrelere PDF'tekine benzer konum verilir: X = sütun sırası, Y = satır sırası.
 public class DocxDocumentParser : DocumentParserBase
 {
+    private const double ColumnStep = 100;
+    private const double RowStep = 100;
+
     protected override IReadOnlyCollection<string> SupportedExtensions { get; } = new[] { ".docx" };
 
     protected override ParsedDocument ReadContent(string filePath)
@@ -18,6 +22,8 @@ public class DocxDocumentParser : DocumentParserBase
 
         var lines = new List<string>();
         var tableRows = new List<IReadOnlyList<string>>();
+        var cells = new List<TextCell>();
+        var rowIndex = 0;
 
         foreach (var element in body.Elements())
         {
@@ -25,21 +31,32 @@ public class DocxDocumentParser : DocumentParserBase
             {
                 case Paragraph paragraph:
                     lines.Add(paragraph.InnerText);
+                    cells.Add(new TextCell(paragraph.InnerText, 0, rowIndex++ * RowStep));
                     break;
 
                 case Table table:
                     foreach (var row in table.Elements<TableRow>())
                     {
-                        var cells = row.Elements<TableCell>().Select(CellText).ToList();
-                        tableRows.Add(cells);
-                        foreach (var cell in cells)
-                            lines.AddRange(cell.Split('\n'));
+                        var texts = new List<string>();
+                        var column = 0;
+                        foreach (var cell in row.Elements<TableCell>())
+                        {
+                            var text = CellText(cell);
+                            texts.Add(text);
+                            lines.AddRange(text.Split('\n'));
+                            cells.Add(new TextCell(text.Replace('\n', ' '), column * ColumnStep, rowIndex * RowStep));
+
+                            // Birleştirilmiş hücre birden fazla sütun kaplar.
+                            column += cell.TableCellProperties?.GridSpan?.Val?.Value ?? 1;
+                        }
+                        tableRows.Add(texts);
+                        rowIndex++;
                     }
                     break;
             }
         }
 
-        return ParsedDocument.Readable(lines, tableRows);
+        return ParsedDocument.Readable(lines, tableRows, cells);
     }
 
     private static string CellText(TableCell cell) =>
