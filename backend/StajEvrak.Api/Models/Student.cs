@@ -15,4 +15,19 @@ public class Student : BaseUser
     }
 
     public override string GetDashboardView() => "/student";
+
+    /// <summary>
+    /// Öğrenci sadece kendi belgesine erişir. "Tamamlandı" statüsündeki belgeyi
+    /// hiçbir şekilde değiştiremez/silemez (hoca S3), sadece görüntüleyebilir.
+    /// </summary>
+    public override DocumentAccess CheckDocumentAccess(Document document, bool modify)
+    {
+        if (document.UserId != Id)
+            return DocumentAccess.NotOwner;
+
+        if (modify && document.IsCompleted)
+            return DocumentAccess.Completed;
+
+        return DocumentAccess.Allowed;
+    }
 }

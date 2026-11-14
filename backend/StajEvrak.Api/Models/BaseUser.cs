@@ -10,7 +10,7 @@ namespace StajEvrak.Api.Models;
 ///    hatalı deneme sayacı dışarıdan değiştirilemez; sadece bu sınıfın
 ///    metotlarıyla (RegisterFailedAttempt, ResetFailedAttempts) değişir.
 ///  - Kalıtım (Inheritance): Student ve Admin bu sınıftan türer.
-///  - Çok Biçimlilik (Polymorphism): GetDashboardView() her alt sınıfta farklıdır.
+///  - Çok Biçimlilik (Polymorphism): GetDashboardView() ve CheckDocumentAccess() her alt sınıfta farklıdır.
 /// </summary>
 public abstract class BaseUser
 {
@@ -82,4 +82,13 @@ public abstract class BaseUser
     /// Çok biçimlilik: her rol kendi panelini döndürür.
     /// </summary>
     public abstract string GetDashboardView();
+
+    /// <summary>
+    /// Bu kullanıcı verilen belgeyi görüntüleyebilir mi / değiştirip silebilir mi?
+    /// Çok biçimlilik: öğrenci ve admin için kural farklıdır (hoca S3, Bölüm 5):
+    ///  - Öğrenci: sadece kendi belgesi; "Tamamlandı" belgeyi değiştiremez/silemez.
+    ///  - Admin: her belgeyi görüntüler, "Tamamlandı" dahil güncelleyip silebilir.
+    /// </summary>
+    /// <param name="modify">true: değiştirme/silme, false: sadece görüntüleme.</param>
+    public abstract DocumentAccess CheckDocumentAccess(Document document, bool modify);
 }

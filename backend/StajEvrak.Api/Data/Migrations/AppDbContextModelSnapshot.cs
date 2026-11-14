@@ -93,6 +93,9 @@ namespace StajEvrak.Api.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("TcNo")
+                        .IsUnique();
+
                     b.ToTable("admin_test_dataset", (string)null);
                 });
 
@@ -154,6 +157,70 @@ namespace StajEvrak.Api.Data.Migrations
                     b.HasDiscriminator<string>("Role").HasValue("BaseUser");
 
                     b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("StajEvrak.Api.Models.Document", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ComparisonReport")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("comparison_report");
+
+                    b.Property<string>("FileExtension")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("file_extension");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("file_name");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("file_path");
+
+                    b.Property<bool>("IsReadyForSubmission")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("is_ready_for_submission");
+
+                    b.Property<string>("ManualFormData")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("manual_form_data");
+
+                    b.Property<string>("ParsedData")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("parsed_data");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("uploaded_at");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("documents", (string)null);
                 });
 
             modelBuilder.Entity("StajEvrak.Api.Models.LoginLog", b =>
@@ -245,6 +312,17 @@ namespace StajEvrak.Api.Data.Migrations
                     b.HasBaseType("StajEvrak.Api.Models.BaseUser");
 
                     b.HasDiscriminator().HasValue("ROLE_STUDENT");
+                });
+
+            modelBuilder.Entity("StajEvrak.Api.Models.Document", b =>
+                {
+                    b.HasOne("StajEvrak.Api.Models.BaseUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("StajEvrak.Api.Models.LoginLog", b =>

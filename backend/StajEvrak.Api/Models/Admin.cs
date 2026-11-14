@@ -16,4 +16,11 @@ public class Admin : BaseUser
     }
 
     public override string GetDashboardView() => "/admin";
+
+    /// <summary>
+    /// Admin tüm belgeleri görüntüler; "Tamamlandı" dahil her belgeyi güncelleyip
+    /// silebilir (hoca S3: "Sadece Admin sayfasından güncelleme ve silme yapılabilir").
+    /// </summary>
+    public override DocumentAccess CheckDocumentAccess(Document document, bool modify)
+        => DocumentAccess.Allowed;
 }
