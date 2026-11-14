@@ -99,6 +99,10 @@ public class AppDbContext : DbContext
             e.Property(d => d.Email).HasColumnName("email").HasMaxLength(150);
             e.Property(d => d.Phone).HasColumnName("phone").HasMaxLength(20);
             e.Property(d => d.HealthInsuranceStatus).HasColumnName("health_insurance_status").HasMaxLength(50);
+
+            // Veri seti içe aktarılırken "aynı öğrenci" kimlik no ile bulunur (TC veya yabancı
+            // kimlik no; ekle ya da güncelle). Aynı kimlik no ile iki satır olamaz.
+            e.HasIndex(d => d.TcNo).IsUnique();
         });
 
         // ---- documents ----

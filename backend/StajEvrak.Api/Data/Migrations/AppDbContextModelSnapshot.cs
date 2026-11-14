@@ -93,6 +93,9 @@ namespace StajEvrak.Api.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("TcNo")
+                        .IsUnique();
+
                     b.ToTable("admin_test_dataset", (string)null);
                 });
 
