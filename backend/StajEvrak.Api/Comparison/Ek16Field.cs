@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace StajEvrak.Api.Comparison;
 
@@ -24,6 +25,13 @@ public abstract class Ek16Field
 
     public bool Matches(string? a, string? b) =>
         Normalize(a ?? string.Empty) == Normalize(b ?? string.Empty);
+
+    // Belgeden okunan ham metni değere çevirir; değer yoksa boş döner.
+    public virtual string Clean(string raw) =>
+        raw.Replace("☐", "").Replace("\n", " ").Trim(' ', '\t', ':', '-', '–', ',', ';');
+
+    // Raporda gösterilecek hâl.
+    public virtual string Display(string? value) => value ?? string.Empty;
 
     // Türkçe karakterleri sadeleştirir, küçük harfe çevirir, harf/rakam dışını boşluk yapar.
     public static string Simplify(string text)
@@ -89,4 +97,85 @@ public class EmailField : Ek16Field
     public EmailField(string key, string label, params string[] labelVariants) : base(key, label, labelVariants) { }
 
     protected override string Normalize(string value) => value.Trim().ToLowerInvariant();
+}
+
+// Ek-16'da "2025-2026 Bahar" yazılır, veri setinde "2025-2026"; sadece yıllar karşılaştırılır.
+public class AcademicYearField : Ek16Field
+{
+    private static readonly Regex Years = new(@"(\d{4})\s*[-–/]\s*(\d{4})");
+
+    public AcademicYearField(string key, string label, params string[] labelVariants) : base(key, label, labelVariants) { }
+
+    protected override string Normalize(string value)
+    {
+        var match = Years.Match(value);
+        return match.Success ? $"{match.Groups[1].Value}-{match.Groups[2].Value}" : Simplify(value);
+    }
+}
+
+// Ek-16'daki tek seçimli "Sağlık yardım statüsü" (6 seçenek).
+// Numara ("2"), seçeneğin metni veya işaretli onay kutusu aynı seçenek sayılır.
+public class HealthStatusField : Ek16Field
+{
+    public static readonly IReadOnlyList<string> Options = new[]
+    {
+        "Genel Sağlık sigortası kapsamındayım",
+        "Anne-Baba üzerinden sağlık yardımı almaktayım",
+        "Sosyal Sigortalar Kurumu'na tabi olarak çalıştığımdan kendi sağlık yardımım var",
+        "Bağ-Kur'a tabi olarak çalıştığımdan kendi sağlık yardımım var",
+        "Emekli Sandığı'na tabi olarak çalıştığımdan kendi sağlık yardımım var",
+        "Herhangi bir sosyal güvencem olmadığından sağlık yardımı alamıyorum",
+    };
+
+    // Seçeneği ayırt eden kelimeler (sadeleştirilmiş).
+    private static readonly string[] Keywords =
+        { "genel saglik", "anne baba", "sosyal sigortalar", "bag kur", "emekli sandigi", "sosyal guvencem" };
+
+    private const string Boxes = "☐☒☑■";
+
+    // "2-☒", "2 ☑" veya "2-☐ X" gibi işaretlenmiş kutu
+    private static readonly Regex Marked = new(@"([1-6])\s*[-.)]?\s*(?:[☒☑■✓✔]|☐\s*[xX✓✔])");
+    private static readonly Regex LeadingNumber = new(@"^\s*([1-6])(?!\d)");
+
+    public HealthStatusField(string key, string label, params string[] labelVariants) : base(key, label, labelVariants) { }
+
+    protected override string Normalize(string value) =>
+        OptionNumber(value)?.ToString() ?? Simplify(value);
+
+    public override string Clean(string raw)
+    {
+        // Onay kutuları varsa sadece işaretli olan geçerlidir; hiçbiri işaretli değilse değer yoktur.
+        if (raw.IndexOfAny(Boxes.ToCharArray()) >= 0)
+        {
+            var marked = Marked.Match(raw);
+            return marked.Success ? Options[int.Parse(marked.Groups[1].Value) - 1] : string.Empty;
+        }
+
+        // Seçeneklerden birine karşılık gelmeyen metin değer sayılmaz.
+        var number = OptionNumber(raw);
+        return number is null ? string.Empty : Options[number.Value - 1];
+    }
+
+    public override string Display(string? value)
+    {
+        var number = OptionNumber(value ?? string.Empty);
+        return number is null ? value ?? string.Empty : Options[number.Value - 1];
+    }
+
+    private static int? OptionNumber(string value)
+    {
+        var marked = Marked.Match(value);
+        if (marked.Success)
+            return int.Parse(marked.Groups[1].Value);
+
+        var leading = LeadingNumber.Match(value);
+        if (leading.Success)
+            return int.Parse(leading.Groups[1].Value);
+
+        var simplified = Simplify(value);
+        for (var i = 0; i < Keywords.Length; i++)
+            if (simplified.Contains(Keywords[i]))
+                return i + 1;
+        return null;
+    }
 }

@@ -42,10 +42,10 @@ public class DocumentComparisonService
             entered.TryGetValue(field.Key, out var value);
 
             if (fromDocument.TryGetValue(field.Key, out var docValue) && !field.Matches(value, docValue))
-                mismatches.Add(new(field.Key, field.Label, value, docValue, SourceDocument));
+                mismatches.Add(new(field.Key, field.Label, field.Display(value), field.Display(docValue), SourceDocument));
 
             if (fromDataset is not null && !field.Matches(value, fromDataset[field.Key]))
-                mismatches.Add(new(field.Key, field.Label, value, fromDataset[field.Key], SourceDataset));
+                mismatches.Add(new(field.Key, field.Label, field.Display(value), field.Display(fromDataset[field.Key]), SourceDataset));
         }
 
         var isReady = fromDataset is not null && mismatches.Count == 0;
