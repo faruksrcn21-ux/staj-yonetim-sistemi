@@ -13,6 +13,9 @@ public class DocumentRepository : IDocumentRepository
     {
         _db.Documents.Add(document);
         await _db.SaveChangesAsync();
+
+        // Yanıttaki kullanıcı adı (username) dolu gelsin diye belgenin sahibi de yüklenir.
+        await _db.Entry(document).Reference(d => d.User).LoadAsync();
     }
 
     public Task SaveChangesAsync() => _db.SaveChangesAsync();

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using StajEvrak.Api.Data;
 using StajEvrak.Api.Models;
+using StajEvrak.Api.Storage;
 
 namespace StajEvrak.Api.Services;
 
@@ -23,18 +24,24 @@ public record DocumentOperationResult(DocumentOperationStatus Status, Document? 
 /// çok biçimlilik); statü geçiş kuralları Document sınıfındadır (kapsülleme).
 /// Bu servis sadece ikisini veritabanıyla birleştirir.
 ///
-/// Not: Dosya yükleme / yeniden yükleme endpoint'leri (4.1) 2. geliştiricidedir.
-/// Orada da yetki için <see cref="CheckAccessAsync"/> kullanılmalıdır.
+/// Not: Dosya yükleme / yeniden yükleme (4.1) 2. geliştiricinin DocumentUploadService'indedir;
+/// orada da yetki için <see cref="CheckAccessAsync"/> kullanılır.
 /// </summary>
 public class DocumentService
 {
     private readonly AppDbContext _db;
+    private readonly IDocumentFileStore _files;
 
-    public DocumentService(AppDbContext db) => _db = db;
+    public DocumentService(AppDbContext db, IDocumentFileStore files)
+    {
+        _db = db;
+        _files = files;
+    }
 
     /// <summary>Öğrencinin kendi belgeleri (en yeni en üstte).</summary>
     public Task<List<Document>> GetByUserAsync(int userId) =>
         _db.Documents
+            .Include(d => d.User) // yanıttaki kullanıcı adı (username) dolu gelsin
             .Where(d => d.UserId == userId)
             .OrderByDescending(d => d.Id)
             .ToListAsync();
@@ -85,10 +92,13 @@ public class DocumentService
         if (access.Status != DocumentOperationStatus.Success)
             return access;
 
-        // Not: Sunucudaki dosyanın kendisi 4.1'de (2. geliştirici) nereye kaydediliyorsa
-        // oradan silinmelidir; burada sadece veritabanı kaydı silinir.
+        var filePath = access.Document!.FilePath;
         _db.Documents.Remove(access.Document!);
         await _db.SaveChangesAsync();
+
+        // Kayıt silindikten sonra sunucudaki dosya da silinir (yetim dosya kalmasın).
+        // Önce veritabanı: kayıt silinemezse dosya yerinde kalır, belge bozulmaz.
+        _files.Delete(filePath);
         return access;
     }
 
