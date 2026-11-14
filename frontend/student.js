@@ -1,10 +1,6 @@
 /* Öğrenci ekranı - sadece student.html'de çalışır (app.js önce yüklenmeli) */
 (function () {
-<<<<<<< HEAD
   const user = Session.require(ROLE_STUDENT);
-=======
-  const user = Session.require([ROLES.STUDENT]);
->>>>>>> origin/main
   if (!user) return;
 
   const $ = id => document.getElementById(id);
@@ -15,15 +11,10 @@
   $("user-name").textContent = user.fullName;
   $("logout-btn").addEventListener("click", () => Session.logout());
 
-<<<<<<< HEAD
   // Ek-16 verilerini elle girme formu (alanlar app.js'teki FIELDS'tan gelir)
   $("fields").innerHTML = FIELDS.map(([k, label, type]) =>
     '<div class="field"><label for="f_' + k + '">' + esc(label) + '</label><input id="f_' + k + '" name="' + k + '" type="' + type + '"></div>'
   ).join("");
-=======
-  document.getElementById("user-name").textContent = user.username;
-  document.getElementById("logout-btn").addEventListener("click", () => Session.logout());
->>>>>>> origin/main
 
   function showMessage(text) { msg.textContent = text; msg.className = "message is-error"; msg.hidden = !text; }
 

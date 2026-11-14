@@ -6,7 +6,6 @@
 
 /* ---------- 1) CONFIG + sabitler ---------- */
 const CONFIG = {
-<<<<<<< HEAD
   USE_MOCK: true,                         // backend hazır olunca false yap
   API_BASE: "http://localhost:5000/api",  // ASP.NET Core adresini 1. kişiden al
   MOCK_DELAY: 300
@@ -44,29 +43,6 @@ const MOCK_SEED = {
   users: [
     { id: 1, role: ROLE_STUDENT, fullName: "Ayşe Yılmaz", studentNo: "210201001", email: "ogrenci@kocaeli.edu.tr", password: "123456" },
     { id: 2, role: ROLE_ADMIN, fullName: "Sistem Yöneticisi", email: "admin@kocaeli.edu.tr", password: "123456" }
-=======
-  USE_MOCK: true,                          // backend hazır olunca false yap
-  API_BASE: "http://localhost:5062/api",   // backend: backend/StajEvrak.Api -> "dotnet run"
-  MOCK_DELAY: 300                          // sahte gecikme (ms)
-};
-
-// Roller backend ile aynı (hocanın dokümanı: ROLE_STUDENT / ROLE_ADMIN).
-// Rol kullanıcıdan alınmaz; girişte sunucudan (JWT) gelir.
-const ROLES = { STUDENT: "ROLE_STUDENT", ADMIN: "ROLE_ADMIN" };
-
-const ROLE_HOME = {
-  [ROLES.STUDENT]: "student.html",
-  [ROLES.ADMIN]: "admin.html"
-};
-
-/* ---------- 2) MOCK_DB ---------- */
-// Kullanıcılar backend'deki yapıyla aynı: { id, username, email, role }
-// Durum değerleri: "pending" | "approved" | "rejected"
-const MOCK_SEED = {
-  users: [
-    { id: 1, role: ROLES.STUDENT, username: "ogrenci", email: "ogrenci@kocaeli.edu.tr", password: "123456" },
-    { id: 2, role: ROLES.ADMIN,   username: "admin",   email: "admin@kocaeli.edu.tr",   password: "123456" }
->>>>>>> origin/main
   ],
   dataset: [
     { adSoyad: "Ayşe Yılmaz", tcNo: "11111111111", uyruk: "T.C.", ogrenciNo: "210201001", dogumTarihi: "2003-04-12", adres: "İzmit / Kocaeli", bolum: "Yazılım Mühendisliği", teslimYili: "2025", eskiStajGun: "0", email: "ogrenci@kocaeli.edu.tr", telefon: "5550000001", saglikYardimi: "Var" },
@@ -81,11 +57,7 @@ const MOCK_SEED = {
 };
 
 const MockDB = {
-<<<<<<< HEAD
   KEY: "staj_evrak_mock_db",
-=======
-  KEY: "staj_mock_db_v2", // v2: kullanıcı yapısı backend'e uyarlandı (eski kayıtlar okunmaz)
->>>>>>> origin/main
   load() {
     try { const raw = localStorage.getItem(this.KEY); if (raw) return JSON.parse(raw); } catch (e) { /* sıfırla */ }
     return JSON.parse(JSON.stringify(MOCK_SEED));
@@ -115,7 +87,6 @@ async function http(path, { method = "GET", body, isForm = false } = {}) {
   if (body && !isForm) headers["Content-Type"] = "application/json";
   const res = await fetch(CONFIG.API_BASE + path, { method, headers, body: body ? (isForm ? body : JSON.stringify(body)) : undefined });
   const data = await res.json().catch(() => ({}));
-<<<<<<< HEAD
   // Yetkisiz istek: 403 -> oturumu sil, login'e yönlendir (login isteğinde değil)
   if (res.status === 403 && path !== "/auth/login") {
     Session.clear();
@@ -123,36 +94,10 @@ async function http(path, { method = "GET", body, isForm = false } = {}) {
     throw new Error("Bu işlem için yetkin yok (403).");
   }
   if (!res.ok) throw new Error(data.message || "Sunucu hatası (" + res.status + ")");
-=======
-
-  if (!res.ok) {
-    // Backend yetkisiz isteklerde 403 + redirectTo:"/login" döner (hoca: "403 döner ve
-    // login sayfasına yönlendirilir"). Oturumu temizleyip giriş sayfasına git.
-    if (res.status === 403 && data.redirectTo) {
-      Session.clear();
-      window.location.href = "index.html";
-    }
-    throw new Error(errorText(data, res.status));
-  }
->>>>>>> origin/main
   return data;
 }
 
-// Backend hata yanıtı: { message, remainingAttempts?, lockedUntil?, redirectTo? }
-// 400 doğrulama hatası: { errors: { Alan: ["mesaj"] } }
-function errorText(data, status) {
-  if (data.errors) return Object.values(data.errors).flat().join(" ");
-  let text = data.message || "Sunucu hatası (" + status + ")";
-  if (data.remainingAttempts != null) text += " Kalan deneme hakkı: " + data.remainingAttempts + ".";
-  if (data.lockedUntil) {
-    const until = new Date(data.lockedUntil).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
-    text += " Tekrar deneme: " + until + ".";
-  }
-  return text;
-}
-
 const api = {
-<<<<<<< HEAD
   // POST /auth/login {email,password} -> {token, user:{id,fullName,email,role}}
   // Hesap kilitliyse backend'in 423 + message döndürmesini bekliyoruz.
   async login({ email, password }) {
@@ -181,42 +126,8 @@ const api = {
     const db = MockDB.load();
     if (db.users.some(u => u.email === email.toLowerCase())) throw new Error("Bu e-posta ile zaten bir hesap var.");
     db.users.push({ id: Date.now(), role: ROLE_STUDENT, fullName, studentNo, email: email.toLowerCase(), password });
-=======
-  // POST /auth/login  {identifier, password} -> {token, expiresAt, user:{id, username, email, role, dashboardView}}
-  // identifier: kullanıcı adı veya e-posta (hoca: "Kullanıcı adı / e-posta + şifre")
-  async login({ identifier, password }) {
-    if (!CONFIG.USE_MOCK) return http("/auth/login", { method: "POST", body: { identifier, password } });
-    await wait();
-    const id = identifier.trim().toLowerCase();
-    const user = MockDB.load().users.find(u =>
-      (u.username.toLowerCase() === id || u.email === id) && u.password === password);
-    if (!user) throw new Error("Kullanıcı adı/e-posta veya şifre hatalı.");
-    const { password: _pw, ...safeUser } = user;
-    return { token: "mock-token-" + user.id, expiresAt: null, user: { ...safeUser, dashboardView: ROLE_HOME[user.role] } };
-  },
-
-  // POST /auth/register  {username, email, password} -> 201 {id, username, email, role, dashboardView}
-  // Kayıt sadece öğrenci oluşturur; admin hesabı backend'de seed ile oluşur.
-  async register({ username, email, password }) {
-    if (!CONFIG.USE_MOCK) return http("/auth/register", { method: "POST", body: { username, email, password } });
-    await wait();
-    const db = MockDB.load();
-    if (db.users.some(u => u.username === username)) throw new Error("Bu kullanıcı adı zaten kullanılıyor.");
-    if (db.users.some(u => u.email === email.toLowerCase())) throw new Error("Bu e-posta zaten kayıtlı.");
-    const user = { id: Date.now(), role: ROLES.STUDENT, username, email: email.toLowerCase(), password };
-    db.users.push(user);
->>>>>>> origin/main
     MockDB.save(db);
-    const { password: _pw, ...safeUser } = user;
-    return safeUser;
-  },
-
-  // POST /auth/logout  (Authorization: Bearer <token>) -> {message}
-  // Hoca: "Çıkış işlemi token/session geçersiz kılar" -> token sunucuda iptal edilir.
-  async logout() {
-    if (!CONFIG.USE_MOCK) return http("/auth/logout", { method: "POST" });
-    await wait(0);
-    return { message: "Çıkış yapıldı." };
+    return { message: "Kayıt başarılı. Şimdi giriş yapabilirsin." };
   },
 
   // POST /auth/logout -> token'ı geçersiz kılar
@@ -242,7 +153,6 @@ const api = {
     await wait();
     if (!ALLOWED_EXT.includes(extOf(file.name))) throw new Error("Desteklenmeyen dosya formatı.");
     const db = MockDB.load(), u = Session.user();
-<<<<<<< HEAD
     if (replaceId) {
       const old = db.documents.find(d => d.id === replaceId && d.userId === u.id);
       if (old && old.status === "completed") throw new Error("Tamamlandı durumundaki belge değiştirilemez.");
@@ -254,12 +164,6 @@ const api = {
       uploadedAt: new Date().toISOString(), status: comparison.ready ? "reviewing" : "faulty", data, comparison };
     db.documents.push(doc); MockDB.save(db);
     return doc;
-=======
-    const app = { id: Date.now(), studentId: u.id, studentName: u.username, studentNo: u.studentNo || "", company, startDate, endDate, status: "pending", feedback: "", documents: files.map(f => f.name) };
-    db.applications.push(app);
-    MockDB.save(db);
-    return app;
->>>>>>> origin/main
   },
 
   // DELETE /documents/:id  (öğrenci: Tamamlandı ise 403; admin: her zaman)
@@ -349,23 +253,13 @@ const Session = {
   token() { const s = this.get(); return s ? s.token : null; },
   user() { const s = this.get(); return s ? s.user : null; },
   clear() { sessionStorage.removeItem("staj_session"); },
-<<<<<<< HEAD
   // Sayfa başında: Session.require(ROLE_ADMIN). Rol uymazsa login'e (403 gibi) yönlendirir.
   require(role) {
-=======
-  // Dashboard sayfalarının başında çağır: Session.require([ROLES.STUDENT])
-  require(roles) {
->>>>>>> origin/main
     const u = this.user();
     if (!u) { window.location.href = "index.html"; return null; }
     if (u.role !== role) { window.location.href = "index.html?reason=forbidden"; return null; }
     return u;
   },
-<<<<<<< HEAD
-=======
-  // Önce sunucuda token iptal edilir, sonra tarayıcıdaki oturum silinir.
-  // Sunucuya ulaşılamasa bile kullanıcı çıkış yapmış sayılır.
->>>>>>> origin/main
   async logout() {
     try { await api.logout(); } catch (e) { /* token zaten geçersiz olabilir */ }
     this.clear();
@@ -386,17 +280,12 @@ const Session = {
   const tabs = document.querySelectorAll(".tab");
   let mode = "login";
 
-<<<<<<< HEAD
   function show(text, type) {
-=======
-  function showMessage(text, type) {
->>>>>>> origin/main
     msg.textContent = text;
     msg.className = "message " + (type === "success" ? "is-success" : "is-error");
     msg.hidden = !text;
   }
 
-<<<<<<< HEAD
   function refresh() {
     const reg = mode === "register";
     form.querySelectorAll("[data-only]").forEach(el => { el.hidden = !reg; });
@@ -409,54 +298,13 @@ const Session = {
   tabs.forEach(t => t.addEventListener("click", () => { mode = t.dataset.mode; refresh(); show(""); }));
   if (new URLSearchParams(location.search).get("reason") === "forbidden") {
     show("Bu sayfaya erişim yetkin yok (403). Lütfen giriş yap.", "error");
-=======
-  // Moda göre alanları göster/gizle (data-only="login" | "register")
-  // Giriş : kullanıcı adı veya e-posta + şifre
-  // Kayıt : kullanıcı adı + e-posta + şifre (sadece öğrenci; rol seçilmez)
-  function refresh() {
-    const isRegister = mode === "register";
-    form.querySelectorAll("[data-only]").forEach(el => {
-      el.hidden = el.dataset.only !== mode;
-    });
-    title.textContent = isRegister ? "Öğrenci hesabı oluştur" : "Hesabına giriş yap";
-    submitBtn.textContent = isRegister ? "Kayıt ol" : "Giriş yap";
-    passwordInput.autocomplete = isRegister ? "new-password" : "current-password";
-
-    tabs.forEach(t => {
-      const active = t.dataset.mode === mode;
-      t.classList.toggle("is-active", active);
-      t.setAttribute("aria-selected", active);
-    });
-  }
-
-  tabs.forEach(t => t.addEventListener("click", () => { mode = t.dataset.mode; showMessage(""); refresh(); }));
-
-  // Kurallar backend ile aynı (Dtos/AuthDtos.cs)
-  function validate(v) {
-    if (mode === "login") {
-      if (!v.identifier) return "Kullanıcı adı veya e-posta gir.";
-      if (!v.password) return "Şifreni gir.";
-      return "";
-    }
-    if (v.username.length < 3 || v.username.length > 100) return "Kullanıcı adı 3-100 karakter olmalı.";
-    if (!/^\S+@\S+\.\S+$/.test(v.email)) return "Geçerli bir e-posta gir.";
-    if (v.password.length < 6) return "Şifre en az 6 karakter olmalı.";
-    return "";
->>>>>>> origin/main
   }
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const v = {
-<<<<<<< HEAD
       fullName: form.elements.fullName.value.trim(), studentNo: form.elements.studentNo.value.trim(),
       email: form.elements.email.value.trim(), password: form.elements.password.value, password2: form.elements.password2.value
-=======
-      identifier: form.elements.identifier.value.trim(),
-      username: form.elements.username.value.trim(),
-      email: form.elements.email.value.trim(),
-      password: form.elements.password.value
->>>>>>> origin/main
     };
     if (!/^\S+@\S+\.\S+$/.test(v.email)) return show("Geçerli bir e-posta gir.", "error");
     if (v.password.length < 6) return show("Şifre en az 6 karakter olmalı.", "error");
@@ -472,27 +320,13 @@ const Session = {
         Session.save(session);
         window.location.href = ROLE_HOME[session.user.role];
       } else {
-<<<<<<< HEAD
         const res = await api.register(v);
         mode = "login"; refresh(); show(res.message, "success");
-=======
-        await api.register(v);
-        mode = "login";
-        refresh();
-        form.elements.identifier.value = v.username; // kolaylık: yeni kullanıcı adını giriş alanına yaz
-        form.elements.password.value = "";
-        showMessage("Kayıt başarılı. Şimdi giriş yapabilirsin.", "success");
->>>>>>> origin/main
       }
     } catch (err) {
       show(err.message, "error");
     } finally {
-<<<<<<< HEAD
       btn.disabled = false;
-=======
-      submitBtn.textContent = mode === "register" ? "Kayıt ol" : "Giriş yap";
-      submitBtn.disabled = false;
->>>>>>> origin/main
     }
   });
 
