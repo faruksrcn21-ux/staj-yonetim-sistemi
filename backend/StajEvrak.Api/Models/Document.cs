@@ -57,7 +57,8 @@ public class Document
         if (string.IsNullOrWhiteSpace(reason))
             throw new InvalidOperationException("Hatalı/Eksik işaretlemek için bir sebep yazılmalıdır.");
 
-        EnsureStatus(DocumentStatus.Inceleniyor, "Hatalı/Eksik olarak işaretlenemez");
+        if (Status != DocumentStatus.Tamamlandi)
+            EnsureStatus(DocumentStatus.Inceleniyor, "Hatalı/Eksik olarak işaretlenemez");
         IsReadyForSubmission = false;
         ComparisonReport = reason;
         Status = DocumentStatus.HataliEksik;
