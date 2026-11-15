@@ -153,7 +153,16 @@ Authorization: Bearer {{adminToken}}
 DELETE {{host}}/api/documents/{{docId}}
 Authorization: Bearer {{token}}
 
-### 23) Admin "Tamamlandı" belgeyi silebilir -> 204
+### 23) Admin "Tamamlandı" belgeyi sebep yazarak geri çeker: Tamamlandı -> Hatalı/Eksik
+POST {{host}}/api/admin/documents/{{docId}}/mark-defective
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "reason": "Onay sonrası öğrenci numarasının hatalı olduğu görüldü."
+}
+
+### 24) Admin "Tamamlandı" belgeyi silebilir -> 204
 DELETE {{host}}/api/documents/{{docId}}
 Authorization: Bearer {{adminToken}}
 
