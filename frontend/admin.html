@@ -43,7 +43,7 @@
       <section id="tab-data" class="tab-section" hidden>
         <div class="field">
           <label for="dataset-file">Test veri seti (CSV veya Excel)</label>
-          <input id="dataset-file" type="file" accept=".csv,.xlsx,.xls">
+          <input id="dataset-file" type="file" accept=".csv,.xlsx">
           <p class="hint">Sütun sırası: ad soyad, TC no, uyruk, öğrenci no, doğum tarihi, adres, bölüm, teslim yılı, eski staj gün sayısı, e-posta, telefon, sağlık yardımı. İlk satır başlık olmalı.</p>
         </div>
         <button type="button" class="btn btn-solid" id="dataset-btn">Veri setini yükle</button>
@@ -67,6 +67,7 @@
       <p id="dlg-message" class="message" role="alert" hidden></p>
       <div class="dlg-actions">
         <button type="button" class="btn" id="dlg-close">Kapat</button>
+        <button type="button" class="btn" id="dlg-file">Dosyayı aç</button>
         <button type="button" class="btn btn-reject" id="dlg-delete">Sil</button>
         <button type="button" class="btn btn-solid" id="dlg-save">Durumu güncelle</button>
       </div>

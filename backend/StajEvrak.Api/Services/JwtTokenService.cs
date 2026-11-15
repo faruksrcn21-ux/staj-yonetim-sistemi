@@ -7,22 +7,9 @@ using StajEvrak.Api.Models;
 
 namespace StajEvrak.Api.Services;
 
-/// <summary>
-/// Giriş başarılı olunca JWT üretir.
-/// Hoca: "Giriş sonrası rol bilgisi session veya JWT içinde taşınır."
-///
-/// Token içindeki bilgiler (claim'ler):
-///   sub  : kullanıcı id
-///   name : kullanıcı adı
-///   role : ROLE_STUDENT / ROLE_ADMIN   (yetki kontrolü buna bakar)
-///   jti  : token'ın benzersiz kimliği  (logout'ta iptal etmek için)
-///   exp  : bitiş zamanı
-/// Token sunucunun gizli anahtarıyla imzalanır; içeriği değiştirilirse imza bozulur
-/// ve token reddedilir. Bu yüzden kullanıcı kendi rolünü ADMIN yapamaz.
-/// </summary>
+// Token gizli anahtarla imzalanır; içindeki rol değiştirilirse imza bozulur ve token reddedilir.
 public class JwtTokenService
 {
-    // Claim isimleri (Program.cs'teki doğrulama ayarlarıyla aynı olmalı)
     public const string RoleClaim = "role";
     public const string NameClaim = JwtRegisteredClaimNames.Name;
 
@@ -56,6 +43,5 @@ public class JwtTokenService
         return (new JsonWebTokenHandler().CreateToken(descriptor), expiresAt);
     }
 
-    /// <summary>İmzalama ve doğrulamada aynı anahtar kullanılır.</summary>
     public static SymmetricSecurityKey CreateSigningKey(string key) => new(Encoding.UTF8.GetBytes(key));
 }

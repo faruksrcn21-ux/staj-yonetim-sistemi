@@ -1,4 +1,4 @@
-/* Öğrenci ekranı - sadece student.html'de çalışır (app.js önce yüklenmeli) */
+/* Öğrenci ekranı (student.html) */
 (function () {
   const user = Session.require(ROLE_STUDENT);
   if (!user) return;
@@ -8,12 +8,18 @@
   const form = $("doc-form"), fileInput = $("file"), msg = $("form-message"), submitBtn = $("submit-btn");
   let replaceId = null;
 
-  $("user-name").textContent = user.fullName;
+  $("user-name").textContent = user.username;
   $("logout-btn").addEventListener("click", () => Session.logout());
 
-  // Ek-16 verilerini elle girme formu (alanlar app.js'teki FIELDS'tan gelir)
-  $("fields").innerHTML = FIELDS.map(([k, label, type]) =>
-    '<div class="field"><label for="f_' + k + '">' + esc(label) + '</label><input id="f_' + k + '" name="' + k + '" type="' + type + '"></div>'
+  // Ek-16 bilgilerini elle girme formu
+  function fieldInput(k, type, hint) {
+    if (type === "select") // sağlık yardım statüsü: Ek-16'daki 6 seçenek
+      return '<select id="f_' + k + '" name="' + k + '"><option value="">Seçiniz</option>' +
+        SAGLIK_SECENEKLERI.map((s, i) => '<option value="' + esc(s) + '">' + (i + 1) + "- " + esc(s) + "</option>").join("") + "</select>";
+    return '<input id="f_' + k + '" name="' + k + '" type="' + type + '"' + (hint ? ' placeholder="' + esc(hint) + '"' : "") + ">";
+  }
+  $("fields").innerHTML = FIELDS.map(([k, label, type, hint]) =>
+    '<div class="field"><label for="f_' + k + '">' + esc(label) + "</label>" + fieldInput(k, type, hint) + "</div>"
   ).join("");
 
   function showMessage(text) { msg.textContent = text; msg.className = "message is-error"; msg.hidden = !text; }
@@ -22,7 +28,7 @@
     form.reset(); showMessage("");
     replaceId = doc ? doc.id : null;
     $("dlg-title").textContent = doc ? "Düzelt ve yeniden yükle" : "Evrak yükle";
-    const base = doc ? doc.data : { adSoyad: user.fullName, ogrenciNo: user.studentNo || "", email: user.email };
+    const base = doc ? doc.data : { email: user.email };
     FIELDS.forEach(([k]) => { $("f_" + k).value = base[k] || ""; });
     dlg.showModal();
   }
@@ -66,7 +72,6 @@
     if (missing.length) return showMessage("Şu alanları doldur: " + missing.join(", "));
     if (data.stajBitis <= data.stajBaslangic) {
   return showMessage("Staj bitiş tarihi, başlangıç tarihinden sonra olmalı.");
-  
 }
 
     const file = fileInput.files[0];
@@ -80,7 +85,12 @@
     try {
       const doc = await api.uploadDocument({ data, file, replaceId });
       dlg.close();
-      toast(doc.comparison && doc.comparison.ready ? "Evrak yüklendi, teslime hazır." : "Evrak yüklendi, uyuşmayan alanlar var.");
+      // Karşılaştırma henüz yapılmadıysa sadece yüklendi denir.
+      let text = !doc.comparison ? "Evrak yüklendi."
+        : doc.comparison.ready ? "Evrak yüklendi, teslime hazır." : "Evrak yüklendi, uyuşmayan alanlar var.";
+      // Belge okunamadıysa sebebi gösterilir.
+      if (doc.parse && !doc.parse.isReadable && doc.parse.reason) text += " Not: " + doc.parse.reason;
+      toast(text);
       load();
     } catch (err) {
       showMessage(err.message);

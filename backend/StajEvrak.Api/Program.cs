@@ -1,7 +1,3 @@
-// Staj Evrak Doğrulama ve Yönetim Sistemi - Backend giriş noktası.
-// Uygulama burada ayağa kalkar: servisler kaydedilir, ardından
-// HTTP istek hattı (middleware pipeline) kurulur.
-
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -9,30 +5,27 @@ using Microsoft.IdentityModel.Tokens;
 using StajEvrak.Api.Data;
 using StajEvrak.Api.Dtos;
 using StajEvrak.Api.Services;
+using StajEvrak.Api.Extensions;
 
-// Gizli ayarları (JWT anahtarı, admin şifresi) .env dosyasından ortam değişkenlerine yükle.
-// NoClobber: bilgisayarda zaten tanımlı bir ortam değişkeni varsa .env onu ezmez.
-// TraversePath: .env'i çalışılan klasörden başlayıp yukarı doğru arar.
+// Gizli ayarlar (JWT anahtarı, admin şifresi) .env dosyasından okunur.
 DotNetEnv.Env.NoClobber().TraversePath().Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ---- Servis kayıtları ----
 builder.Services.AddControllers();
-builder.Services.AddOpenApi(); // /openapi/v1.json (sadece Development'ta açılır)
+builder.Services.AddOpenApi();
 
-// Veritabanı: SQLite (bağlantı bilgisi appsettings.json -> ConnectionStrings:Default)
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Default")));
 
-// Auth servisleri (her HTTP isteği için yeni bir örnek oluşturulur)
 builder.Services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<DocumentService>();
 builder.Services.AddScoped<StudentDatasetMatcher>();
+builder.Services.AddDatasetModule();
+builder.Services.AddDocumentUploadModule();
 
-// ---- JWT ayarları ----
 var jwtSection = builder.Configuration.GetSection(JwtOptions.SectionName);
 builder.Services.Configure<JwtOptions>(jwtSection);
 var jwt = jwtSection.Get<JwtOptions>() ?? new JwtOptions();
@@ -45,31 +38,27 @@ builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        // Claim isimlerini olduğu gibi kullan ("role" -> "role"), .NET'in uzun isimlerine çevirme.
         options.MapInboundClaims = false;
 
-        // Her istekte token şu kurallara göre doğrulanır:
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidIssuer = jwt.Issuer,
             ValidateAudience = true,
             ValidAudience = jwt.Audience,
-            ValidateLifetime = true,                 // süresi dolmuş token reddedilir
+            ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero,
-            ValidateIssuerSigningKey = true,         // imzası bozuk (değiştirilmiş) token reddedilir
+            ValidateIssuerSigningKey = true,
             IssuerSigningKey = JwtTokenService.CreateSigningKey(jwt.Key),
             NameClaimType = JwtTokenService.NameClaim,
-            RoleClaimType = JwtTokenService.RoleClaim, // [Authorize(Roles=...)] bu claim'e bakar
+            RoleClaimType = JwtTokenService.RoleClaim,
         };
 
-        // Hoca: "Yetkisiz istekler 403 döner ve login sayfasına yönlendirilir."
-        // Bu yüzden hem giriş yapmamış hem de rolü yetmeyen isteklere 403 döner.
-        // API sayfa yönlendirmesi yapamaz; bunun yerine yanıtta redirectTo="/login" döner,
-        // frontend bunu görünce kullanıcıyı login sayfasına yönlendirir.
+        // Giriş yapmamış ve rolü yetmeyen isteklere 403 + redirectTo="/login" döner;
+        // yönlendirmeyi frontend yapar.
         options.Events = new JwtBearerEvents
         {
-            // İmza ve süre geçerli olsa bile, çıkış (logout) yapılmış token'ı reddet.
+            // Çıkış yapılmış token geçerli görünse bile reddedilir.
             OnTokenValidated = async context =>
             {
                 var jti = context.Principal?.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
@@ -78,7 +67,7 @@ builder.Services
                 if (jti is null || await auth.IsTokenRevokedAsync(jti))
                     context.Fail("Token çıkış yapılarak iptal edilmiş.");
             },
-            // Token yok / geçersiz / süresi dolmuş / iptal edilmiş -> 403
+            // Token yok, geçersiz, süresi dolmuş veya iptal edilmiş
             OnChallenge = async context =>
             {
                 context.HandleResponse();
@@ -86,7 +75,7 @@ builder.Services
                 await context.Response.WriteAsJsonAsync(new ErrorResponse(
                     "Bu işlem için giriş yapmanız gerekiyor.", RedirectTo: "/login"));
             },
-            // Token geçerli ama rol yetmiyor -> 403
+            // Token geçerli ama rol yetmiyor
             OnForbidden = async context =>
             {
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
@@ -98,11 +87,8 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-// ---- CORS ----
-// Frontend tarayıcıda farklı bir adresten (ör. VS Code Live Server: http://127.0.0.1:5500)
-// çalıştığı için, tarayıcı API'ye istek atmadan önce izin sorar. Sadece bu bilgisayardaki
-// (localhost / 127.0.0.1) adreslere izin verilir. HTML dosyası çift tıklanarak açılırsa
-// tarayıcı adresi "null" gönderir; buna sadece geliştirme ortamında izin verilir.
+// Sadece bu bilgisayardaki adreslerden (localhost) gelen isteklere izin verilir.
+// Dosyadan açılan HTML "null" adres gönderir; buna sadece geliştirmede izin verilir.
 const string FrontendCorsPolicy = "Frontend";
 var allowNullOrigin = builder.Environment.IsDevelopment();
 
@@ -117,9 +103,7 @@ builder.Services.AddCors(options => options.AddPolicy(FrontendCorsPolicy, policy
 
 var app = builder.Build();
 
-// Uygulama açılırken:
-//  1) Bekleyen migration'lar uygulanır (ekipte herkes "dotnet run" dediğinde tablolar oluşur).
-//  2) Hiç admin yoksa appsettings'teki "AdminSeed" bilgileriyle admin hesabı oluşturulur.
+// Açılışta tablolar oluşturulur/güncellenir ve admin yoksa oluşturulur.
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -134,16 +118,15 @@ using (var scope = app.Services.CreateScope())
         app.Logger);
 }
 
-// ---- HTTP istek hattı ----
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
 app.UseHttpsRedirection();
-app.UseCors(FrontendCorsPolicy); // 0) Tarayıcıdan gelen isteğe izin ver (yetki kontrolünden ÖNCE olmalı)
-app.UseAuthentication(); // 1) Token'ı oku ve doğrula: "Bu kim?"
-app.UseAuthorization();  // 2) Rolü kontrol et: "Buna yetkisi var mı?"
+app.UseCors(FrontendCorsPolicy);
+app.UseAuthentication(); // Token'ı doğrula: bu kim?
+app.UseAuthorization();  // Rolü kontrol et: yetkisi var mı?
 app.MapControllers();
 
 app.Run();

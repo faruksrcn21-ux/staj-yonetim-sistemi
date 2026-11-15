@@ -1,10 +1,5 @@
 namespace StajEvrak.Api.Models;
 
-/// <summary>
-/// Belge statüleri (documents.status sütunu). Değerler ortak ER diyagramıyla aynıdır.
-/// Hocanın akışı (Bölüm 5):
-/// Yüklendi → İnceleniyor → Hatalı / Eksik → (düzeltilip yeniden yüklenir) → Onaylandı → Tamamlandı
-/// </summary>
 public static class DocumentStatus
 {
     public const string Yuklendi = "YUKLENDI";

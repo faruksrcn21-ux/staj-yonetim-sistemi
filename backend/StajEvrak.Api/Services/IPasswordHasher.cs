@@ -1,10 +1,6 @@
 namespace StajEvrak.Api.Services;
 
-/// <summary>
-/// Şifre hash'leme sözleşmesi (Soyutlama).
-/// AuthService hangi algoritmanın kullanıldığını bilmez; sadece bu arayüzü kullanır.
-/// İleride BCrypt yerine başka bir algoritma gerekirse sadece yeni bir sınıf yazılır.
-/// </summary>
+// Soyutlama: AuthService hangi hash algoritmasının kullanıldığını bilmez.
 public interface IPasswordHasher
 {
     string Hash(string password);

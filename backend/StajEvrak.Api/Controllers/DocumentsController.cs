@@ -8,18 +8,6 @@ using StajEvrak.Api.Services;
 
 namespace StajEvrak.Api.Controllers;
 
-/// <summary>
-/// Belge görüntüleme ve silme (öğrenci + admin).
-///
-///   GET    /api/documents        → öğrencinin kendi belgeleri (ROLE_STUDENT)
-///   GET    /api/documents/{id}   → tek belge (öğrenci: sadece kendi; admin: hepsi)
-///   DELETE /api/documents/{id}   → sil (öğrenci: kendi ve Tamamlandı değilse; admin: hepsi)
-///
-/// Hoca S3: "Tamamlandı" belgeyi öğrenci değiştiremez/silemez, admin güncelleyip silebilir.
-/// Kural kullanıcı sınıflarında (Student/Admin.CheckDocumentAccess) – çok biçimlilik.
-///
-/// Dosya yükleme / yeniden yükleme (4.1) 2. geliştiricinin endpoint'indedir.
-/// </summary>
 [ApiController]
 [Route("api/documents")]
 public class DocumentsController : ControllerBase
@@ -46,6 +34,32 @@ public class DocumentsController : ControllerBase
         return DocumentResults.ToActionResult(this, result);
     }
 
+    // Yüklenen dosyanın kendisi
+    [Authorize(Roles = Roles.Student + "," + Roles.Admin)]
+    [HttpGet("{id:int}/file")]
+    public async Task<IActionResult> GetFile(int id)
+    {
+        var result = await _documents.CheckAccessAsync(id, CurrentUserId, modify: false);
+        if (result.Status != DocumentOperationStatus.Success)
+            return DocumentResults.ToActionResult(this, result);
+
+        var document = result.Document!;
+        if (!System.IO.File.Exists(document.FilePath))
+            return NotFound(new ErrorResponse("Dosya sunucuda bulunamadı."));
+
+        return PhysicalFile(document.FilePath, ContentTypeOf(document.FileExtension), document.FileName);
+    }
+
+    private static string ContentTypeOf(string extension) => extension switch
+    {
+        ".pdf" => "application/pdf",
+        ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".doc" => "application/msword",
+        ".jpeg" or ".jpg" => "image/jpeg",
+        ".png" => "image/png",
+        _ => "application/octet-stream",
+    };
+
     [Authorize(Roles = Roles.Student + "," + Roles.Admin)]
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
@@ -57,11 +71,7 @@ public class DocumentsController : ControllerBase
     }
 }
 
-/// <summary>
-/// DocumentService sonucunu HTTP yanıtına çevirir.
-/// Not: Buradaki 403'lerde redirectTo yoktur; kullanıcı giriş yapmış ama bu belgeye
-/// izni yok. Frontend oturumu kapatmadan sadece mesajı gösterir.
-/// </summary>
+// Buradaki 403'lerde redirectTo yok: kullanıcı giriş yapmış ama bu belgeye izni yok.
 internal static class DocumentResults
 {
     public static IActionResult ToActionResult(ControllerBase c, DocumentOperationResult r) => r.Status switch
