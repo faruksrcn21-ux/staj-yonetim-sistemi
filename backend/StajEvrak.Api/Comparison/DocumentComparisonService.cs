@@ -46,7 +46,8 @@ public class DocumentComparisonService
                 mismatches.Add(new(field.Key, field.Label, field.Display(value), field.Display(fromDataset[field.Key]), SourceDataset));
         }
 
-        var isReady = fromDataset is not null && mismatches.Count == 0;
+        var unrecognizedDocument = parsed.IsReadable && fromDocument.Count == 0;
+        var isReady = fromDataset is not null && mismatches.Count == 0 && !unrecognizedDocument;
         var report = new ComparisonReport(BuildNote(parsed, fromDocument.Count, fromDataset is not null), mismatches);
 
         document.StartReview();
@@ -64,7 +65,7 @@ public class DocumentComparisonService
         if (!parsed.IsReadable)
             notes.Add($"{parsed.UnreadableReason} Girilen bilgiler sadece veri setiyle karşılaştırıldı; belgeyi admin inceleyecek.");
         else if (fieldsFound == 0)
-            notes.Add("Belgede tanınan bir alan bulunamadı; girilen bilgiler sadece veri setiyle karşılaştırıldı.");
+            notes.Add("Belgede tanınan bir alan bulunamadı; bu belge Ek-16 olmayabilir.");
         else
             notes.Add($"Belgeden {fieldsFound} alan okundu ve karşılaştırıldı.");
 
