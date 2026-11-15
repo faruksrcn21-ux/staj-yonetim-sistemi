@@ -31,7 +31,7 @@ const STATUS_FROM_API = {
 const NEXT_STATUSES = {
   uploaded: ["reviewing"],
   reviewing: ["completed", "faulty"],
-  faulty: [], approved: [], completed: []
+  faulty: [], approved: [], completed: ["faulty"]
 };
 const ACTION_LABEL = { reviewing: "İncelemeye al", completed: "Onayla (Tamamlandı)", faulty: "Hatalı / Eksik olarak işaretle" };
 
