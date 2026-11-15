@@ -70,6 +70,9 @@
     FIELDS.forEach(([k]) => { data[k] = $("f_" + k).value.trim(); });
     const missing = FIELDS.filter(([k]) => !data[k]).map(f => f[1]);
     if (missing.length) return showMessage("Şu alanları doldur: " + missing.join(", "));
+    if (data.stajBitis <= data.stajBaslangic) {
+  return showMessage("Staj bitiş tarihi, başlangıç tarihinden sonra olmalı.");
+}
 
     const file = fileInput.files[0];
     if (!file) return showMessage("Bir belge seç.");
